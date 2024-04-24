@@ -1,0 +1,5 @@
+../Core/Src/keypad.c:10:6:keypad_init	8	static
+../Core/Src/keypad.c:32:6:keypad_setAllCols	4	static
+../Core/Src/keypad.c:37:6:delay	24	static
+../Core/Src/keypad.c:42:8:keypad_read	16	static
+../Core/Src/keypad.c:61:9:col_pins_to_int	16	static
