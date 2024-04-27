@@ -29,7 +29,6 @@
 
 void SystemClock_Config(void);
 
-int first_time_in_state = 1;
 typedef enum {
     SQUARE,
     SAWTOOTH,
@@ -39,7 +38,7 @@ typedef enum {
 state_t state = SQUARE;
 
 uint16_t lut_val;
-uint16_t lut_ind = 0;
+uint16_t lut_ind;
 uint16_t freq = 500;
 uint8_t duty_cycle = 50;
 
@@ -50,11 +49,9 @@ int main(void) {
 
     DAC_init();
     keypad_init();
+    square_wave_init(freq, duty_cycle);
     
     int8_t key;
-    
-    
-    square_wave_init(freq, duty_cycle);
     while (1) {
         key = keypad_read_oneshot();
         if (isFreqChangePin(key)) {
