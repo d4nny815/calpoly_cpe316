@@ -21,6 +21,12 @@
 #include "FuncGen.h"
 #include "DAC.h"
 
+#define SINE_KEY 6
+#define SAWTOOTH_KEY 7
+#define TRIANGLE_KEY 8
+#define SQUARE_KEY 9
+
+
 void SystemClock_Config(void);
 
 int first_time_in_state = 1;
@@ -32,6 +38,12 @@ typedef enum {
 } state_t;
 state_t state = SQUARE;
 
+uint16_t lut_val;
+uint16_t lut_ind = 0;
+uint16_t freq = 500;
+uint8_t duty_cycle = 50;
+
+
 int main(void) {
     HAL_Init();
     SystemClock_Config();
@@ -40,15 +52,14 @@ int main(void) {
     keypad_init();
     
     int8_t key;
-    uint16_t freq = 500;
-    uint8_t duty_cycle = 50;
+    
     
     square_wave_init(freq, duty_cycle);
     while (1) {
         key = keypad_read_oneshot();
         if (isFreqChangePin(key)) {
             freq = key * FREQ_MIN;
-            square_wave_init(freq, duty_cycle);
+            if (state == SQUARE) square_wave_init(freq, duty_cycle);
         }
         else if (isDutyChangePin(key) && state == SQUARE) {
             switch (key) {
@@ -65,11 +76,30 @@ int main(void) {
             square_wave_init(freq, duty_cycle);
         }
         else if (isWaveChangePin(key)) {
-            
+            switch (key) {
+                case SINE_KEY:
+                    if (state == SQUARE) continous_mode_init();
+                    state = SINE;
+                    break;
+                case TRIANGLE_KEY:
+                    if (state == SQUARE) continous_mode_init();
+                    state = TRIANGLE;
+                    break;
+                case SAWTOOTH_KEY:
+                    if (state == SQUARE) continous_mode_init();
+                    state = SAWTOOTH;
+                    break;
+                case SQUARE_KEY:
+                    square_wave_init(freq, duty_cycle);
+                    state = SQUARE;
+                    break;
+            }
+            lut_ind = 0;
         }
     }
     return 0;
 }
+
 
 
 void TIM2_IRQHandler(void) {
@@ -80,6 +110,24 @@ void TIM2_IRQHandler(void) {
             } else {
                 DAC_write(volt_to_dac_val(MAX_FUNC_VOLTAGE));
             }
+            break;
+        case SAWTOOTH:
+            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
+            lut_val = SAWTOOTH_LUT[lut_ind];
+            DAC_write(lut_val);
+            TIM2->CCR1 += NEXT_PERIOD;
+            break;
+        case SINE:
+            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
+            lut_val = SINE_LUT[lut_ind];
+            DAC_write(lut_val);
+            TIM2->CCR1 += NEXT_PERIOD;
+            break;
+        case TRIANGLE:
+            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
+            lut_val = TRIANGLE_LUT[lut_ind];
+            DAC_write(lut_val);
+            TIM2->CCR1 += NEXT_PERIOD;
             break;
         default: break;
     }    
