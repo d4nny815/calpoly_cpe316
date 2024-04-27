@@ -40,7 +40,6 @@ int main(void) {
     uint16_t volt;
     for (;;) {
         volt = get_volt_from_keypad();
-        if (volt > MAX_VOLT_THRESHOLD) continue;
         volt = volt_to_dac_val(volt);
         DAC_write(volt);
     }
