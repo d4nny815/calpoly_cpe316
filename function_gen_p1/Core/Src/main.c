@@ -31,15 +31,12 @@ typedef enum {
     SINE,
     TRIANGLE
 } state_t;
-state_t state = TRIANGLE;
+state_t state = SQUARE;
 
 uint32_t wave_lut_ind;
 uint16_t freq = 500;
 uint8_t duty_cycle = 50;
 uint32_t wave_scalar = 500 / FREQ_MIN;
-
-static volatile int plz_work = 0;
-static volatile int toggle = 0;
 
 
 int main(void) {
@@ -58,12 +55,11 @@ int main(void) {
 
     DAC_init();
     keypad_init();
-//    square_wave_init(freq, duty_cycle);
-    continous_mode_init();
+    square_wave_init(freq, duty_cycle);
     
-    int8_t key;
+    int8_t key = KEYPAD_NO_PRESS;
     while (1) {
-        key = keypad_read();
+        key = keypad_read_oneshot();
         if (isFreqChangePin(key)) {
             freq = key * FREQ_MIN;
             wave_scalar = freq / FREQ_MIN;
@@ -102,36 +98,9 @@ int main(void) {
                     state = SQUARE;
                     break;
             }
+            wave_scalar = freq / FREQ_MIN;
             wave_lut_ind = 0;
         }
-//        if (plz_work) {
-//            GPIOC->BSRR = GPIO_PIN_0;
-//            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
-//            switch (state) {
-//            case SQUARE:
-//                if (1) {
-//                    DAC_write(volt_to_dac_val(MIN_FUNC_VOLTAGE));
-//                } else {
-//                    DAC_write(volt_to_dac_val(MAX_FUNC_VOLTAGE));
-//                }
-//                break;
-//            case SAWTOOTH:
-//                DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
-//                break;
-//            case SINE:
-//                DAC_write(SINE_LUT[wave_lut_ind]);
-//                break;
-//            case TRIANGLE:
-//                DAC_write(TRIANGLE_LUT[wave_lut_ind]);
-//                break;
-//            default: break;
-//            }
-//
-//            TIM2->SR &= ~(ARR_BIT);
-//            plz_work = 0;
-//            GPIOC->BRR = GPIO_PIN_0;
-//            NVIC_EnableIRQ(TIM2_IRQn);
-//        }
     }
     return 0;
 }
@@ -161,9 +130,7 @@ void TIM2_IRQHandler(void) {
         break;
     default: break;
     }
-    TIM2->SR &= ~(ARR_BIT);
-//    NVIC_DisableIRQ(TIM2_IRQn);
-//    plz_work = 1;
+    TIM2->SR &= ~(TIM_INTR_FLAGS);
 }
 
 /**

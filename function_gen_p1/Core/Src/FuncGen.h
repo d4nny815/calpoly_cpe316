@@ -17,9 +17,8 @@
 #define MIN_FUNC_VOLTAGE 0
 #define ARR_BIT TIM_SR_UIF
 #define CCR1_BIT TIM_SR_CC1IF
+#define TIM_INTR_FLAGS ARR_BIT | CCR1_BIT
 #define FREQ_MIN 100
-//#define NEXT_PERIOD 0x2df // T_waveform_max * F_cpu / LUT_size = CCR
-#define NEXT_PERIOD 65 // T_waveform_max * F_cpu / LUT_size = CCR
 #define SINE_KEY 6
 #define SAWTOOTH_KEY 7
 #define TRIANGLE_KEY 8

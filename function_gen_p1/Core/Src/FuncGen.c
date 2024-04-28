@@ -22,7 +22,7 @@ void square_wave_init(uint16_t freq, uint8_t duty_cycle) {
     TIM2->CCER |= TIM_CCER_CC1E;
     TIM2->DIER |= (TIM_DIER_UIE | TIM_DIER_CC1IE);
 
-    DBGMCU->APB1FZR1 |= 1;
+//    DBGMCU->APB1FZR1 |= 1;
 
     NVIC_EnableIRQ(TIM2_IRQn);
     __enable_irq();
@@ -44,6 +44,7 @@ void continous_mode_init(void) {
     TIM2->DIER &= ~(TIM_DIER_UIE | TIM_DIER_CC1IE);
     TIM2->DIER |= TIM_DIER_UIE;
 
+//    DBGMCU->APB1FZR1 |= 1;
 
     NVIC_EnableIRQ(TIM2_IRQn);
     __enable_irq();
