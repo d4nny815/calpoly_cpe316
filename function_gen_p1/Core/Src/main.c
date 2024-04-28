@@ -33,10 +33,10 @@ typedef enum {
 } state_t;
 state_t state = SQUARE;
 
-uint16_t wave_lut_val;
-uint16_t wave_lut_ind;
+uint32_t wave_lut_ind;
 uint16_t freq = 500;
 uint8_t duty_cycle = 50;
+uint32_t wave_scalar = 500 / FREQ_MIN;
 
 
 int main(void) {
@@ -52,6 +52,7 @@ int main(void) {
         key = keypad_read_oneshot();
         if (isFreqChangePin(key)) {
             freq = key * FREQ_MIN;
+            wave_scalar = freq / FREQ_MIN;
             if (state == SQUARE) square_wave_init(freq, duty_cycle);
         }
         else if (isDutyChangePin(key) && state == SQUARE) {
@@ -105,19 +106,19 @@ void TIM2_IRQHandler(void) {
             }
             break;
         case SAWTOOTH:
-            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
             DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_PERIOD;
+            TIM2->CCR1 += NEXT_CCR;
             break;
         case SINE:
-            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
             DAC_write(SINE_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_PERIOD;
+            TIM2->CCR1 += NEXT_CCR;
             break;
         case TRIANGLE:
-            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
             DAC_write(TRIANGLE_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_PERIOD;
+            TIM2->CCR1 += NEXT_CCR;
             break;
         default: break;
     }    
