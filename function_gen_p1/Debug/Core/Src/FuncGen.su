@@ -1,4 +1,4 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static,ignoring_inline_asm
 ../Drivers/CMSIS/Include/core_cm4.h:1717:22:__NVIC_DisableIRQ	16	static,ignoring_inline_asm
 ../Core/Src/FuncGen.c:9:6:square_wave_init	24	static,ignoring_inline_asm
-../Core/Src/FuncGen.c:31:6:continous_mode_init	8	static,ignoring_inline_asm
+../Core/Src/FuncGen.c:33:6:continous_mode_init	8	static,ignoring_inline_asm

@@ -31,21 +31,35 @@ typedef enum {
     SINE,
     TRIANGLE
 } state_t;
-state_t state = SQUARE;
+state_t state = TRIANGLE;
 
 uint32_t wave_lut_ind;
 uint16_t freq = 500;
 uint8_t duty_cycle = 50;
 uint32_t wave_scalar = 500 / FREQ_MIN;
 
+static volatile int plz_work = 0;
+static volatile int toggle = 0;
+
 
 int main(void) {
     HAL_Init();
     SystemClock_Config();
 
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+
+        GPIOC->MODER   &= ~(GPIO_MODER_MODE0);          // clear mode bits for pin 5
+        GPIOC->MODER   |= GPIO_MODER_MODE0_0;           // output mode
+        GPIOC->OTYPER  &= ~(GPIO_OTYPER_OT0);           // push pull
+        GPIOC->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED0_Msk);  // low speed
+        GPIOC->PUPDR   &= ~(GPIO_PUPDR_PUPD0);          // no resistor
+
+        GPIOC->BSRR = GPIO_PIN_0;
+
     DAC_init();
     keypad_init();
-    square_wave_init(freq, duty_cycle);
+//    square_wave_init(freq, duty_cycle);
+    continous_mode_init();
     
     int8_t key;
     while (1) {
@@ -90,6 +104,34 @@ int main(void) {
             }
             wave_lut_ind = 0;
         }
+//        if (plz_work) {
+//            GPIOC->BSRR = GPIO_PIN_0;
+//            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+//            switch (state) {
+//            case SQUARE:
+//                if (1) {
+//                    DAC_write(volt_to_dac_val(MIN_FUNC_VOLTAGE));
+//                } else {
+//                    DAC_write(volt_to_dac_val(MAX_FUNC_VOLTAGE));
+//                }
+//                break;
+//            case SAWTOOTH:
+//                DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
+//                break;
+//            case SINE:
+//                DAC_write(SINE_LUT[wave_lut_ind]);
+//                break;
+//            case TRIANGLE:
+//                DAC_write(TRIANGLE_LUT[wave_lut_ind]);
+//                break;
+//            default: break;
+//            }
+//
+//            TIM2->SR &= ~(ARR_BIT);
+//            plz_work = 0;
+//            GPIOC->BRR = GPIO_PIN_0;
+//            NVIC_EnableIRQ(TIM2_IRQn);
+//        }
     }
     return 0;
 }
@@ -98,32 +140,30 @@ int main(void) {
 
 void TIM2_IRQHandler(void) {
     switch (state) {
-        case SQUARE:
-            if (TIM2->SR & CCR1_BIT) {
-                DAC_write(volt_to_dac_val(MIN_FUNC_VOLTAGE));
-            } else {
-                DAC_write(volt_to_dac_val(MAX_FUNC_VOLTAGE));
-            }
-            break;
-        case SAWTOOTH:
-            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
-            DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_CCR;
-            break;
-        case SINE:
-            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
-            DAC_write(SINE_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_CCR;
-            break;
-        case TRIANGLE:
-            wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
-            DAC_write(TRIANGLE_LUT[wave_lut_ind]);
-            TIM2->CCR1 += NEXT_CCR;
-            break;
-        default: break;
-    }    
-
-    TIM2->SR &= ~(CCR1_BIT | ARR_BIT);
+    case SQUARE:
+        if (TIM2->SR & CCR1_BIT) {
+            DAC_write(volt_to_dac_val(MIN_FUNC_VOLTAGE));
+        } else {
+            DAC_write(volt_to_dac_val(MAX_FUNC_VOLTAGE));
+        }
+        break;
+    case SAWTOOTH:
+        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
+        break;
+    case SINE:
+        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        DAC_write(SINE_LUT[wave_lut_ind]);
+        break;
+    case TRIANGLE:
+        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        DAC_write(TRIANGLE_LUT[wave_lut_ind]);
+        break;
+    default: break;
+    }
+    TIM2->SR &= ~(ARR_BIT);
+//    NVIC_DisableIRQ(TIM2_IRQn);
+//    plz_work = 1;
 }
 
 /**
