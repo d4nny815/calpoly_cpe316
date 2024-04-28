@@ -1,6 +1,10 @@
 from math import sin, pi
 
+CPU_FREQ = 4e6
+T_WAVE = 10e-3
 LUT_SPACE = 2 ** 8
+LUT_SPACE = 320
+NEXT_CCR = int(T_WAVE * CPU_FREQ / LUT_SPACE)
 
 def main():
     print("#ifndef SRC_WAVEFORM_LUT_H_")
@@ -9,7 +13,8 @@ def main():
     print('#include "stm32l476xx.h"')
     print()
     print(f"#define WAVE_LUT_SIZE {LUT_SPACE}")
-    print(f"#define WAVE_LUT_MASK {LUT_SPACE} - 1")
+    print(f"#define WAVE_LUT_MASK ({LUT_SPACE} - 1)")
+    print(f"#define NEXT_CCR {NEXT_CCR}")
     print("\n")
     triangle_lut()
     sine_lut()

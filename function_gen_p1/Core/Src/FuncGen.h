@@ -24,9 +24,9 @@
 #define TRIANGLE_KEY 8
 #define SQUARE_KEY 9
 
-#define isFreqChangePin(x) ((uint8_t)x >= 1 && (uint8_t)x <= 5)
-#define isWaveChangePin(x) ((uint8_t)x >= 6 && (uint8_t)x <= 9)
-#define isDutyChangePin(x) ((uint8_t)x == 0 || (uint8_t)x == KEYPAD_STAR || (uint8_t)x == KEYPAD_POUND)
+#define isFreqChangePin(x) ((int8_t)x >= 1 && (int8_t)x <= 5)
+#define isWaveChangePin(x) ((int8_t)x >= 6 && (int8_t)x <= 9)
+#define isDutyChangePin(x) ((int8_t)x == 0 || (int8_t)x == KEYPAD_STAR || (int8_t)x == KEYPAD_POUND)
 
 
 void square_wave_init(uint16_t freq, uint8_t duty_cycle);
