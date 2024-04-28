@@ -15,16 +15,12 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+
+
 #include "main.h"
 #include "FuncGen.h"
 #include "DAC.h"
 
-#define SINE_KEY 6
-#define SAWTOOTH_KEY 7
-#define TRIANGLE_KEY 8
-#define SQUARE_KEY 9
 
 
 void SystemClock_Config(void);
@@ -37,8 +33,8 @@ typedef enum {
 } state_t;
 state_t state = SQUARE;
 
-uint16_t lut_val;
-uint16_t lut_ind;
+uint16_t wave_lut_val;
+uint16_t wave_lut_ind;
 uint16_t freq = 500;
 uint8_t duty_cycle = 50;
 
@@ -91,7 +87,7 @@ int main(void) {
                     state = SQUARE;
                     break;
             }
-            lut_ind = 0;
+            wave_lut_ind = 0;
         }
     }
     return 0;
@@ -109,21 +105,18 @@ void TIM2_IRQHandler(void) {
             }
             break;
         case SAWTOOTH:
-            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
-            lut_val = SAWTOOTH_LUT[lut_ind];
-            DAC_write(lut_val);
+            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
             TIM2->CCR1 += NEXT_PERIOD;
             break;
         case SINE:
-            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
-            lut_val = SINE_LUT[lut_ind];
-            DAC_write(lut_val);
+            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            DAC_write(SINE_LUT[wave_lut_ind]);
             TIM2->CCR1 += NEXT_PERIOD;
             break;
         case TRIANGLE:
-            lut_ind = (lut_ind + freq / FREQ_MIN) & LUT_SIZE;
-            lut_val = TRIANGLE_LUT[lut_ind];
-            DAC_write(lut_val);
+            wave_lut_ind = (wave_lut_ind + freq / FREQ_MIN) & WAVE_LUT_MASK;
+            DAC_write(TRIANGLE_LUT[wave_lut_ind]);
             TIM2->CCR1 += NEXT_PERIOD;
             break;
         default: break;

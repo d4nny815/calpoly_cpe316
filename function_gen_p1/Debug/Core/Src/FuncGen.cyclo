@@ -1,4 +1,4 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	2
 ../Drivers/CMSIS/Include/core_cm4.h:1717:22:__NVIC_DisableIRQ	2
-../Core/Src/FuncGen.c:11:6:square_wave_init	1
-../Core/Src/FuncGen.c:33:6:continous_mode_init	1
+../Core/Src/FuncGen.c:9:6:square_wave_init	1
+../Core/Src/FuncGen.c:31:6:continous_mode_init	1

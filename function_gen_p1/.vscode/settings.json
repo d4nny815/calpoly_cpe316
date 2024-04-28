@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "stm32l476xx.h": "c"
+        "stm32l476xx.h": "c",
+        "keypad.h": "c"
     }
 }

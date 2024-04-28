@@ -6,7 +6,6 @@
  */
 #include "DAC.h"
 
-
 // Configure GPIOs and SPI Regs
 void SPI_init() {
     // PA4 - CS
@@ -57,8 +56,3 @@ void DAC_write(uint16_t voltage) {
     while (!(SPI1->SR & SPI_SR_TXE));
     SPI1->DR = voltage;
 }
-
-// uint16_t volt_to_dac_val(uint16_t voltage) {
-    // return (DAC_CONFIG_MASK | (MASK_12BIT & (uint16_t)((double)voltage / MAX_VOLTAGE * MASK_12BIT)));
-// }
-

@@ -7,6 +7,7 @@
 
 #ifndef SRC_DAC_H_
 #define SRC_DAC_H_
+
 #include "stm32l476xx.h"
 
 #define DAC_PORT GPIOA
@@ -21,6 +22,5 @@
 void SPI_init();
 void DAC_init();
 void DAC_write(uint16_t voltage);
-// uint16_t volt_to_dac_val(uint16_t voltage);
 
 #endif /* SRC_DAC_H_ */

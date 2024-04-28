@@ -1,7 +1,7 @@
 ../Core/Src/main.c:27:6:signal_pin_init	4	static
-../Core/Src/main.c:51:6:square_wave	24	static,ignoring_inline_asm
-../Core/Src/main.c:67:6:square_wave_continuous_mode	4	static,ignoring_inline_asm
-../Core/Src/main.c:81:6:TIM2_IRQHandler	4	static
-../Core/Src/main.c:105:5:main	16	static
-../Core/Src/main.c:142:6:SystemClock_Config	96	static
-../Core/Src/main.c:190:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:50:6:square_wave	24	static,ignoring_inline_asm
+../Core/Src/main.c:66:6:square_wave_continuous_mode	4	static,ignoring_inline_asm
+../Core/Src/main.c:80:6:TIM2_IRQHandler	4	static
+../Core/Src/main.c:104:5:main	16	static
+../Core/Src/main.c:141:6:SystemClock_Config	96	static
+../Core/Src/main.c:189:6:Error_Handler	4	static,ignoring_inline_asm

@@ -1,17 +1,28 @@
 from math import sin, pi
 
+LUT_SPACE = 2 ** 8
 
 def main():
-    # sawtooth_lut()
-    # sine_lut()
+    print("#ifndef SRC_WAVEFORM_LUT_H_")
+    print("#define SRC_WAVEFORM_LUT_H_")
+    print()
+    print('#include "stm32l476xx.h"')
+    print()
+    print(f"#define WAVE_LUT_SIZE {LUT_SPACE}")
+    print(f"#define WAVE_LUT_MASK {LUT_SPACE} - 1")
+    print("\n")
     triangle_lut()
+    sine_lut()
+    sawtooth_lut()
+    
+    print()
+    print("#endif /* SRC_WAVEFORM_LUT_H_ */")
 
 
 def sawtooth_lut():
-    LUT_SPACE = 2 ** 8
     VPP = 3000 
     slope = VPP / LUT_SPACE
-    print("const uint16_t SAWTOOTH_LUT[LUT_SIZE + 1] = {", end='')
+    print("static const uint16_t SAWTOOTH_LUT[WAVE_LUT_SIZE] = {", end='')
     for i in range(LUT_SPACE):
         volt = vout(i * slope)
         print(f"{volt}", end='')
@@ -21,10 +32,9 @@ def sawtooth_lut():
     return
 
 def sine_lut():
-    LUT_SPACE = 2 ** 8
     VPP = 3000 
     RADIANS = 2 * pi
-    print("const uint16_t SINE_LUT[LUT_SIZE + 1] = {", end='')
+    print("static const uint16_t SINE_LUT[WAVE_LUT_SIZE] = {", end='')
     for i in range(LUT_SPACE):
         x = (VPP / 2) * sin(float(i) / LUT_SPACE  * RADIANS) + (VPP / 2)
         volt = vout(x)
@@ -34,9 +44,8 @@ def sine_lut():
     return
 
 def triangle_lut():
-    LUT_SPACE = 2 ** 8
     V_M = 3000 
-    print("const uint16_t TRIANGLE_LUT[LUT_SIZE + 1] = {", end='')
+    print("static const uint16_t TRIANGLE_LUT[WAVE_LUT_SIZE] = {", end='')
     for i in range(LUT_SPACE):
         x = 0;
         if i == LUT_SPACE / 2:
@@ -53,6 +62,8 @@ def triangle_lut():
 
 def vout(x):
     return int(0x3 << 12 | (0xfff & int(x / 3300 * 0xfff)))
+
+    
 
 if __name__ == "__main__":
     main()

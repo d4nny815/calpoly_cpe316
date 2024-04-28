@@ -6,8 +6,6 @@
  */
 #include "FuncGen.h"
 
-
-
 void square_wave_init(uint16_t freq, uint8_t duty_cycle) {
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
     

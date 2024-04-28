@@ -44,7 +44,6 @@ void signal_pin_init(void) {
     GPIOC->PUPDR   &= ~(GPIO_PUPDR_PUPD1);          // no resistor
 
     GPIOC->BSRR = GPIO_PIN_1;
-
 }
 
 // part A
