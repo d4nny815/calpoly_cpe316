@@ -49,7 +49,7 @@ int main(void) {
     
     int8_t key;
     while (1) {
-        key = keypad_read_oneshot();
+        key = keypad_read();
         if (isFreqChangePin(key)) {
             freq = key * FREQ_MIN;
             wave_scalar = freq / FREQ_MIN;
