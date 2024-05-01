@@ -17,6 +17,7 @@
 #define DATA_FRAME_16BIT 0xf
 #define MAX_VOLTAGE 3300
 #define volt_to_dac_val(voltage) (uint16_t)(DAC_CONFIG_MASK | (MASK_12BIT & (uint16_t)((double)voltage / MAX_VOLTAGE * MASK_12BIT)))
+#define MAX_DAC_VAL volt_to_dac_val(MAX_VOLTAGE)
 
 
 void SPI_init();

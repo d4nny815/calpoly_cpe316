@@ -16,9 +16,9 @@ void square_wave_init(uint16_t freq, uint8_t duty_cycle) {
     
     
     uint32_t max_arr = CPU_FREQ / freq;
-    TIM2->ARR = max_arr - 1;
+    TIM2->ARR = max_arr + 300;
     TIM2->PSC = 0;
-    TIM2->CCR1 = (uint32_t)(max_arr * ((float)duty_cycle / 100) - 1);
+    TIM2->CCR1 = (uint32_t)(max_arr * ((float)duty_cycle / 100) + 150);
     TIM2->CCER |= TIM_CCER_CC1E;
     TIM2->DIER |= (TIM_DIER_UIE | TIM_DIER_CC1IE);
 

@@ -3,7 +3,7 @@ from math import sin, pi
 CPU_FREQ = 40e6
 T_WAVE = 10e-3
 LUT_SPACE = 2 ** 8
-LUT_SPACE = 3 * 4 * 5 * 53
+LUT_SPACE = 3 * 4 * 5 * 55
 AAR_VAL = int(T_WAVE * CPU_FREQ / LUT_SPACE)
 
 def main():

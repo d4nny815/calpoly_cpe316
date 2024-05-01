@@ -48,6 +48,8 @@ void DAC_init() {
 }
 
 void DAC_write(uint16_t voltage) {
+    if (voltage > MAX_DAC_VAL) voltage = MAX_DAC_VAL;
+    
     while (!(SPI1->SR & SPI_SR_TXE));
     SPI1->DR = voltage;
 }
