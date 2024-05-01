@@ -7,23 +7,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00001968  08000188  08000188  00001188  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00004970  08001af0  08001af0  00002af0  2**2
+  2 .rodata       00004ad8  08001af0  08001af0  00002af0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08006460  08006460  00008014  2**0
+  3 .ARM.extab    00000000  080065c8  080065c8  00008014  2**0
                   CONTENTS
-  4 .ARM          00000000  08006460  08006460  00008014  2**0
+  4 .ARM          00000000  080065c8  080065c8  00008014  2**0
                   CONTENTS
-  5 .preinit_array 00000000  08006460  08006460  00008014  2**0
+  5 .preinit_array 00000000  080065c8  080065c8  00008014  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08006460  08006460  00007460  2**2
+  6 .init_array   00000004  080065c8  080065c8  000075c8  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  08006464  08006464  00007464  2**2
+  7 .fini_array   00000004  080065cc  080065cc  000075cc  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         00000014  20000000  08006468  00008000  2**2
+  8 .data         00000014  20000000  080065d0  00008000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000028  20000014  0800647c  00008014  2**2
+  9 .bss          00000028  20000014  080065e4  00008014  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  2000003c  0800647c  0000803c  2**0
+ 10 ._user_heap_stack 00000604  2000003c  080065e4  0000803c  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  00008014  2**0
                   CONTENTS, READONLY
@@ -470,7 +470,7 @@ void continous_mode_init(void) {
     
     TIM2->ARR = ARR_VAL;
  8000482:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
- 8000486:	2280      	movs	r2, #128	@ 0x80
+ 8000486:	227d      	movs	r2, #125	@ 0x7d
  8000488:	62da      	str	r2, [r3, #44]	@ 0x2c
     TIM2->PSC = 0;
  800048a:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
@@ -1113,11 +1113,11 @@ void TIM2_IRQHandler(void) {
  80008da:	4b2d      	ldr	r3, [pc, #180]	@ (8000990 <TIM2_IRQHandler+0x100>)
  80008dc:	681b      	ldr	r3, [r3, #0]
  80008de:	441a      	add	r2, r3
- 80008e0:	0913      	lsrs	r3, r2, #4
+ 80008e0:	0893      	lsrs	r3, r2, #2
  80008e2:	492c      	ldr	r1, [pc, #176]	@ (8000994 <TIM2_IRQHandler+0x104>)
  80008e4:	fba1 1303 	umull	r1, r3, r1, r3
- 80008e8:	08db      	lsrs	r3, r3, #3
- 80008ea:	f44f 6143 	mov.w	r1, #3120	@ 0xc30
+ 80008e8:	0a1b      	lsrs	r3, r3, #8
+ 80008ea:	f640 416c 	movw	r1, #3180	@ 0xc6c
  80008ee:	fb01 f303 	mul.w	r3, r1, r3
  80008f2:	1ad3      	subs	r3, r2, r3
  80008f4:	4a25      	ldr	r2, [pc, #148]	@ (800098c <TIM2_IRQHandler+0xfc>)
@@ -1138,11 +1138,11 @@ void TIM2_IRQHandler(void) {
  800090e:	4b20      	ldr	r3, [pc, #128]	@ (8000990 <TIM2_IRQHandler+0x100>)
  8000910:	681b      	ldr	r3, [r3, #0]
  8000912:	441a      	add	r2, r3
- 8000914:	0913      	lsrs	r3, r2, #4
+ 8000914:	0893      	lsrs	r3, r2, #2
  8000916:	491f      	ldr	r1, [pc, #124]	@ (8000994 <TIM2_IRQHandler+0x104>)
  8000918:	fba1 1303 	umull	r1, r3, r1, r3
- 800091c:	08db      	lsrs	r3, r3, #3
- 800091e:	f44f 6143 	mov.w	r1, #3120	@ 0xc30
+ 800091c:	0a1b      	lsrs	r3, r3, #8
+ 800091e:	f640 416c 	movw	r1, #3180	@ 0xc6c
  8000922:	fb01 f303 	mul.w	r3, r1, r3
  8000926:	1ad3      	subs	r3, r2, r3
  8000928:	4a18      	ldr	r2, [pc, #96]	@ (800098c <TIM2_IRQHandler+0xfc>)
@@ -1163,11 +1163,11 @@ void TIM2_IRQHandler(void) {
  8000942:	4b13      	ldr	r3, [pc, #76]	@ (8000990 <TIM2_IRQHandler+0x100>)
  8000944:	681b      	ldr	r3, [r3, #0]
  8000946:	441a      	add	r2, r3
- 8000948:	0913      	lsrs	r3, r2, #4
+ 8000948:	0893      	lsrs	r3, r2, #2
  800094a:	4912      	ldr	r1, [pc, #72]	@ (8000994 <TIM2_IRQHandler+0x104>)
  800094c:	fba1 1303 	umull	r1, r3, r1, r3
- 8000950:	08db      	lsrs	r3, r3, #3
- 8000952:	f44f 6143 	mov.w	r1, #3120	@ 0xc30
+ 8000950:	0a1b      	lsrs	r3, r3, #8
+ 8000952:	f640 416c 	movw	r1, #3180	@ 0xc6c
  8000956:	fb01 f303 	mul.w	r3, r1, r3
  800095a:	1ad3      	subs	r3, r2, r3
  800095c:	4a0b      	ldr	r2, [pc, #44]	@ (800098c <TIM2_IRQHandler+0xfc>)
@@ -1196,9 +1196,9 @@ void TIM2_IRQHandler(void) {
  8000988:	20000030 	.word	0x20000030
  800098c:	20000034 	.word	0x20000034
  8000990:	20000004 	.word	0x20000004
- 8000994:	0a80a80b 	.word	0x0a80a80b
- 8000998:	08004bc0 	.word	0x08004bc0
- 800099c:	08003360 	.word	0x08003360
+ 8000994:	526f6a97 	.word	0x526f6a97
+ 8000998:	08004cb0 	.word	0x08004cb0
+ 800099c:	080033d8 	.word	0x080033d8
  80009a0:	08001b00 	.word	0x08001b00
 
 080009a4 <SystemClock_Config>:
@@ -1677,7 +1677,7 @@ LoopForever:
   ldr r1, =_edata
  8000b60:	20000014 	.word	0x20000014
   ldr r2, =_sidata
- 8000b64:	08006468 	.word	0x08006468
+ 8000b64:	080065d0 	.word	0x080065d0
   ldr r2, =_sbss
  8000b68:	20000014 	.word	0x20000014
   ldr r4, =_ebss
@@ -2757,7 +2757,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  800115c:	e014      	b.n	8001188 <HAL_RCC_OscConfig+0x298>
  800115e:	bf00      	nop
  8001160:	40021000 	.word	0x40021000
- 8001164:	08006420 	.word	0x08006420
+ 8001164:	08006588 	.word	0x08006588
  8001168:	20000008 	.word	0x20000008
  800116c:	2000000c 	.word	0x2000000c
  8001170:	4ba0      	ldr	r3, [pc, #640]	@ (80013f4 <HAL_RCC_OscConfig+0x504>)
@@ -4062,7 +4062,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8001892:	bd80      	pop	{r7, pc}
  8001894:	40022000 	.word	0x40022000
  8001898:	40021000 	.word	0x40021000
- 800189c:	08006420 	.word	0x08006420
+ 800189c:	08006588 	.word	0x08006588
  80018a0:	20000008 	.word	0x20000008
  80018a4:	2000000c 	.word	0x2000000c
 
@@ -4267,7 +4267,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  80019ac:	4770      	bx	lr
  80019ae:	bf00      	nop
  80019b0:	40021000 	.word	0x40021000
- 80019b4:	08006430 	.word	0x08006430
+ 80019b4:	08006598 	.word	0x08006598
  80019b8:	00f42400 	.word	0x00f42400
  80019bc:	007a1200 	.word	0x007a1200
 
@@ -4464,10 +4464,10 @@ static HAL_StatusTypeDef RCC_SetFlashLatencyFromMSIRange(uint32_t msirange)
  8001ac2:	4798      	blx	r3
  8001ac4:	3601      	adds	r6, #1
  8001ac6:	e7f2      	b.n	8001aae <__libc_init_array+0x1e>
- 8001ac8:	08006460 	.word	0x08006460
- 8001acc:	08006460 	.word	0x08006460
- 8001ad0:	08006460 	.word	0x08006460
- 8001ad4:	08006464 	.word	0x08006464
+ 8001ac8:	080065c8 	.word	0x080065c8
+ 8001acc:	080065c8 	.word	0x080065c8
+ 8001ad0:	080065c8 	.word	0x080065c8
+ 8001ad4:	080065cc 	.word	0x080065cc
 
 08001ad8 <_init>:
  8001ad8:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
