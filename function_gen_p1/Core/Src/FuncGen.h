@@ -12,7 +12,6 @@
 #include "Waveform_LUT.h"
 #include "keypad.h"
 
-#define CPU_FREQ 4000000
 #define MAX_FUNC_VOLTAGE 3000
 #define MIN_FUNC_VOLTAGE 0
 #define ARR_BIT TIM_SR_UIF
