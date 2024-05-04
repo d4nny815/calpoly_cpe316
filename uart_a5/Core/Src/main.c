@@ -30,30 +30,30 @@ int main(void) {
     print_start_screen();
    
     
-    while (1) {
+    while (1);
 
 
-    }
+    return 0;
 }
 
 void USART2_IRQHandler(void) {
     if (USART2->ISR & USART_ISR_RXNE) {
         char c = USART2->RDR;
         switch (c) {
-            case RED_KEY:
-                usart_send_escape("[31m");
-                break;
-            case BLUE_KEY:
-                usart_send_escape("[34m");
-                break;
-            case GREEN_KEY:
-                usart_send_escape("[32m");
-                break;
-            case WHITE_KEY:
-                usart_send_escape("[0m");
-                break;
-            default:
-                usart_send_char(c);
+        case RED_KEY:
+            usart_send_escape("[31m");
+            break;
+        case BLUE_KEY:
+            usart_send_escape("[34m");
+            break;
+        case GREEN_KEY:
+            usart_send_escape("[32m");
+            break;
+        case WHITE_KEY:
+            usart_send_escape("[0m");
+            break;
+        default:
+            usart_send_char(c);
         }
     }
     return;

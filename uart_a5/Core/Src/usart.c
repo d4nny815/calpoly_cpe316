@@ -27,20 +27,14 @@ void usart_init(void) {
     usart_pin_init();
     
     RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-    USART2->CR1 &= ~(USART_CR1_M1 | USART_CR1_M0);   // 8-bit data
-    USART2->CR1 &= ~USART_CR1_OVER8;   // oversampling by 16
+    // 8-bit data, oversampling by 16, 1 stop bit, no parity bit, rx interrupt enabled
+    USART2->CR1 = (USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE);
     USART2->BRR = USART_BRR;        // set baud rate
-    USART2->CR2 &= ~USART_CR2_STOP;   // 1 stop bit
-    USART2->CR1 |= USART_CR1_TE | USART_CR1_RE;   // enable transmitter and receiver
-    // no parity bit
-    
-    // will have to enable rx intr later
-    USART2->CR1 |= USART_CR1_RXNEIE;   // disable RXNE interrupt
+
     NVIC_EnableIRQ(USART2_IRQn);
     __enable_irq();
 
     USART2->CR1 |= USART_CR1_UE;   // enable USART2
-
 
     // clear screen and reset cursor
     usart_send_escape("[2J");
@@ -67,5 +61,6 @@ void usart_send_string(const char* str) {
 void usart_send_escape(const char* str) {
     usart_send_char(ESC_CHAR);
     usart_send_string(str);
+
     return;
 }
