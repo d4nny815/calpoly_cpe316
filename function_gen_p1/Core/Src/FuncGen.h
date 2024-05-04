@@ -17,6 +17,10 @@
 #define ARR_BIT TIM_SR_UIF
 #define CCR1_BIT TIM_SR_CC1IF
 #define TIM_INTR_FLAGS ARR_BIT | CCR1_BIT
+#define DEFAULT_FREQ 100
+#define DEFAULT_DC 50
+#define MIN_DC 10
+#define MAX_DC 90
 #define FREQ_MIN 100
 #define SINE_KEY 6
 #define SAWTOOTH_KEY 7

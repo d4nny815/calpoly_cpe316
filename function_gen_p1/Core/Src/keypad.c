@@ -73,7 +73,7 @@ int8_t keypad_read_oneshot() {
     int8_t prev_key = KEYPAD_NO_PRESS;
     while (1) {
         key = keypad_read();
-        delay(300); // terrible way to debounce
+        delay(5000); // terrible way to debounce
         
         // one shot key press 
         if (prev_key != KEYPAD_NO_PRESS && key == KEYPAD_NO_PRESS) {

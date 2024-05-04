@@ -20,6 +20,7 @@
 #include "FuncGen.h"
 #include "DAC.h"
 
+
 void SystemClock_Config(void);
 
 typedef enum {
@@ -27,13 +28,17 @@ typedef enum {
     SAWTOOTH,
     SINE,
     TRIANGLE
-} state_t;
-state_t state = SQUARE;
+} WaveShape_t;
+WaveShape_t state = SQUARE;
+
+void change_freq(int8_t key);
+void change_duty_cycle(int8_t key);
+void change_shape(int8_t key);
 
 uint32_t wave_lut_ind;
-uint16_t freq = 500;
-uint8_t duty_cycle = 50;
-uint32_t wave_scalar = 500 / FREQ_MIN;
+uint16_t freq = DEFAULT_FREQ;
+uint32_t next_lut_offset = DEFAULT_FREQ / FREQ_MIN;
+uint8_t duty_cycle = DEFAULT_DC;
 
 /**
   * @brief  The application entry point.
@@ -51,56 +56,67 @@ int main(void) {
     while (1) {
         key = keypad_read_oneshot();
         if (isFreqChangePin(key)) {
-            freq = key * FREQ_MIN;
-            wave_scalar = freq / FREQ_MIN;
+            change_freq(key);
             wave_lut_ind = 0;
             if (state == SQUARE) square_wave_init(freq, duty_cycle);
         }
         else if (isDutyChangePin(key) && state == SQUARE) {
-            switch (key) {
-                case 0:
-                    duty_cycle = 50;
-                    break;
-                case KEYPAD_STAR:
-                    duty_cycle = 10;
-                    break;
-                case KEYPAD_POUND:
-                    duty_cycle = 90;
-                    break;
-            }
+            change_duty_cycle(key);
             square_wave_init(freq, duty_cycle);
         }
         else if (isWaveChangePin(key)) {
-            switch (key) {
-                case SINE_KEY:
-                    if (state == SQUARE) continous_mode_init();
-                    state = SINE;
-                    break;
-                case TRIANGLE_KEY:
-                    if (state == SQUARE) continous_mode_init();
-                    state = TRIANGLE;
-                    break;
-                case SAWTOOTH_KEY:
-                    if (state == SQUARE) continous_mode_init();
-                    state = SAWTOOTH;
-                    break;
-                case SQUARE_KEY:
-                    square_wave_init(freq, duty_cycle);
-                    state = SQUARE;
-                    break;
-            }
-            wave_scalar = freq / FREQ_MIN;
+            change_shape(key);
             wave_lut_ind = 0;
         }
     }
 
-
-    while (1) {
-
-    }
-
-
     return 0;
+}
+
+void change_freq(int8_t key) {
+    freq = key * FREQ_MIN;
+    next_lut_offset = key;
+
+    return;
+}
+
+void change_duty_cycle(int8_t key) {
+    switch (key) {
+    case 0:
+        duty_cycle = 50;
+        return;
+    case KEYPAD_STAR:
+        if (duty_cycle > MIN_DC) {
+            duty_cycle -= 10;
+        }
+        return;
+    case KEYPAD_POUND:
+        if (duty_cycle < MAX_DC) {
+            duty_cycle += 10;
+        }
+        return;
+    }
+}
+
+void change_shape(int8_t key) {
+    switch (key) {
+    case SINE_KEY:
+        if (state == SQUARE) continous_mode_init();
+        state = SINE;
+        return;
+    case TRIANGLE_KEY:
+        if (state == SQUARE) continous_mode_init();
+        state = TRIANGLE;
+        return;
+    case SAWTOOTH_KEY:
+        if (state == SQUARE) continous_mode_init();
+        state = SAWTOOTH;
+        return;
+    case SQUARE_KEY:
+        square_wave_init(freq, duty_cycle);
+        state = SQUARE;
+        return;
+    }
 }
 
 
@@ -114,15 +130,15 @@ void TIM2_IRQHandler(void) {
         }
         break;
     case SAWTOOTH:
-        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        wave_lut_ind = (wave_lut_ind + next_lut_offset) % WAVE_LUT_SIZE;
         DAC_write(SAWTOOTH_LUT[wave_lut_ind]);
         break;
     case SINE:
-        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        wave_lut_ind = (wave_lut_ind + next_lut_offset) % WAVE_LUT_SIZE;
         DAC_write(SINE_LUT[wave_lut_ind]);
         break;
     case TRIANGLE:
-        wave_lut_ind = (wave_lut_ind + wave_scalar) % WAVE_LUT_SIZE;
+        wave_lut_ind = (wave_lut_ind + next_lut_offset) % WAVE_LUT_SIZE;
         DAC_write(TRIANGLE_LUT[wave_lut_ind]);
         break;
     default: break;
