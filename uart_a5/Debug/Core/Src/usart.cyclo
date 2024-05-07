@@ -1,6 +1,6 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	2
 ../Core/Src/usart.c:11:6:usart_pin_init	1
 ../Core/Src/usart.c:26:6:usart_init	1
-../Core/Src/usart.c:51:6:usart_send_char	2
-../Core/Src/usart.c:58:6:usart_send_string	2
-../Core/Src/usart.c:67:6:usart_send_escape	1
+../Core/Src/usart.c:45:6:usart_send_char	2
+../Core/Src/usart.c:52:6:usart_send_string	2
+../Core/Src/usart.c:61:6:usart_send_escape	1
