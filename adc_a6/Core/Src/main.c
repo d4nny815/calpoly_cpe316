@@ -15,89 +15,104 @@
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
+#include "ADC.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+uint16_t get_min_arr(uint16_t *arr, int size);
+uint16_t get_max_arr(uint16_t *arr, int size);
+uint16_t get_avg_arr(uint16_t *arr, int size);
 
-/* USER CODE END Includes */
+#define ADC_ARRAY_SIZE 20
+volatile int adc_flag = 0;
+uint16_t adc_value;
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
+void delay(uint32_t time);
 
-/* USER CODE END PFP */
+int main(void) {
+    HAL_Init();
+    SystemClock_Config();
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
+    ADC_init();
 
-/* USER CODE END 0 */
+    uint16_t adc_value;
+    uint16_t adc_values[ADC_ARRAY_SIZE] = {0};
+    int adc_values_index = 0;
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
+    uint16_t min, max, avg;
+    char uart_string_buffer[100];
 
-  /* USER CODE BEGIN 1 */
+    while (1) {
+        if (adc_flag) {
+            adc_values[adc_values_index] = adc_value;
+            adc_values_index++;
 
-  /* USER CODE END 1 */
+            ADC_start_conversion();
+            adc_flag = 0;
+        }
 
-  /* MCU Configuration--------------------------------------------------------*/
+        if (adc_values_index == ADC_ARRAY_SIZE) {
+            adc_values_index = 0;
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+            min = get_min_arr(adc_values, ADC_ARRAY_SIZE);
+            max = get_max_arr(adc_values, ADC_ARRAY_SIZE);
+            avg = get_avg_arr(adc_values, ADC_ARRAY_SIZE);
 
-  /* USER CODE BEGIN Init */
+            sprintf(uart_string_buffer, "Min: %d, Max: %d, Avg: %d\n", min, max, avg);
+        }
+    }
 
-  /* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+    return 0;
 }
+
+
+uint16_t get_min_arr(uint16_t *arr, int size) {
+    uint16_t min = arr[0];
+    for (int i = 1; i < size; i++) {
+        if (arr[i] < min) {
+            min = arr[i];
+        }
+    }
+    return min;
+}
+
+uint16_t get_max_arr(uint16_t *arr, int size) {
+    uint16_t max = arr[0];
+    for (int i = 1; i < size; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
+    return max;
+}
+
+uint16_t get_avg_arr(uint16_t *arr, int size) {
+    uint32_t sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += arr[i];
+    }
+    return sum / size;
+}
+
+
+void delay(uint32_t time) {
+    for (uint32_t i = 0; i < time; i++);
+}
+
+
+void ADC1_2_IRQHandler() {
+    if (ADC1->ISR & ADC_ISR_EOC) {
+        adc_flag = 1;
+        adc_value = ADC1->DR;
+    }
+
+    return;
+}
+
+
 
 /**
   * @brief System Clock Configuration
