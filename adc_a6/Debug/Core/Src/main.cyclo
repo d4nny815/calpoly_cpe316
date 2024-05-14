@@ -1,0 +1,9 @@
+../Core/Src/main.c:37:5:main	3
+../Core/Src/main.c:92:6:print_screen	2
+../Core/Src/main.c:110:10:get_min_arr	3
+../Core/Src/main.c:120:10:get_max_arr	3
+../Core/Src/main.c:130:10:get_avg_arr	2
+../Core/Src/main.c:139:6:delay	2
+../Core/Src/main.c:144:6:ADC1_2_IRQHandler	2
+../Core/Src/main.c:161:6:SystemClock_Config	4
+../Core/Src/main.c:209:6:Error_Handler	1

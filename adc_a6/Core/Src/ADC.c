@@ -47,8 +47,13 @@ void ADC_init() {
 }
 
 // ! make this a MACRO
-// void ADC_start_conversion() {
-    // ADC1->CR |= ADC_CR_ADSTART; 
-    // return;
-// }
+void ADC_start_conversion() {
+    ADC1->CR |= ADC_CR_ADSTART; 
+    return;
+}
+
+uint16_t adc_to_mv(uint16_t val) {
+    return val * VREF / ADC_REF;
+}
+
 

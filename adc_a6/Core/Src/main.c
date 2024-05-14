@@ -18,14 +18,17 @@
 
 #include "main.h"
 #include "ADC.h"
+#include "uart.h"
+#include "stdio.h"
 
 uint16_t get_min_arr(uint16_t *arr, int size);
 uint16_t get_max_arr(uint16_t *arr, int size);
 uint16_t get_avg_arr(uint16_t *arr, int size);
+void print_screen(int ind, uint16_t* arr, int arr_size);
 
 #define ADC_ARRAY_SIZE 20
 volatile int adc_flag = 0;
-uint16_t adc_value;
+volatile uint16_t adc_value;
 
 
 void SystemClock_Config(void);
@@ -35,39 +38,74 @@ int main(void) {
     HAL_Init();
     SystemClock_Config();
 
+    uart_init();
     ADC_init();
 
-    uint16_t adc_value;
+//    uint32_t iter = 0;
+
     uint16_t adc_values[ADC_ARRAY_SIZE] = {0};
     int adc_values_index = 0;
 
     uint16_t min, max, avg;
     char uart_string_buffer[100];
 
+    uart_send_string("starting");
+    ADC_start_conversion();
+
     while (1) {
-        if (adc_flag) {
+        if (adc_flag) { // gets set in ISR
             adc_values[adc_values_index] = adc_value;
             adc_values_index++;
 
-            ADC_start_conversion();
+            if (adc_values_index == ADC_ARRAY_SIZE) {
+                adc_values_index = 0;
+
+                min = get_min_arr(adc_values, ADC_ARRAY_SIZE);
+                max = get_max_arr(adc_values, ADC_ARRAY_SIZE);
+                avg = get_avg_arr(adc_values, ADC_ARRAY_SIZE);
+
+                min = adc_to_mv(min);
+                max = adc_to_mv(max);
+                avg = adc_to_mv(avg);
+
+                sprintf(uart_string_buffer, "Min: %hu, Max: %hu, Avg: %hu\n", min, max, avg); // just here for debug rn
+                uart_clear_screen();
+                uart_send_string(uart_string_buffer);
+
+            }
+
             adc_flag = 0;
+            ADC_start_conversion();
         }
 
-        if (adc_values_index == ADC_ARRAY_SIZE) {
-            adc_values_index = 0;
+//        for (uint32_t i = 0; i < 10000; i++);
 
-            min = get_min_arr(adc_values, ADC_ARRAY_SIZE);
-            max = get_max_arr(adc_values, ADC_ARRAY_SIZE);
-            avg = get_avg_arr(adc_values, ADC_ARRAY_SIZE);
 
-            sprintf(uart_string_buffer, "Min: %d, Max: %d, Avg: %d\n", min, max, avg);
-        }
     }
+
 
 
     return 0;
 }
 
+
+void print_screen(int ind, uint16_t* arr, int arr_size) {
+    char uart_string_buffer[1024];
+    char tmp[1024];
+
+    uart_send_escape("[2J");
+    uart_send_escape("[H");
+
+    sprintf(uart_string_buffer, "Index: %d\n", ind);
+
+    for (int i = 0; i < arr_size; i++) {
+        sprintf(tmp, "%d: %hu ", i, arr[i]);
+        strcat(uart_string_buffer, tmp);
+    }
+
+    uart_send_string(uart_string_buffer);
+    return;
+}
 
 uint16_t get_min_arr(uint16_t *arr, int size) {
     uint16_t min = arr[0];
@@ -107,6 +145,8 @@ void ADC1_2_IRQHandler() {
     if (ADC1->ISR & ADC_ISR_EOC) {
         adc_flag = 1;
         adc_value = ADC1->DR;
+
+//        ADC1->ISR |= ADC_ISR_EOC;
     }
 
     return;

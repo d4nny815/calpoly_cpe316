@@ -14,7 +14,7 @@ void uart_pin_init(void) {
     USART_PORT->AFR[0] &= ~(GPIO_AFRL_AFSEL2 | GPIO_AFRL_AFSEL3);
     USART_PORT->AFR[0] |= (USART_AF << GPIO_AFRL_AFSEL2_Pos | USART_AF << GPIO_AFRL_AFSEL3_Pos);
 
-    USART_PORT->MODER = ~(GPIO_MODER_MODE2 | GPIO_MODER_MODE3);
+    USART_PORT->MODER &= ~(GPIO_MODER_MODE2 | GPIO_MODER_MODE3);
     USART_PORT->MODER |= (GPIO_MODER_MODE2_1 | GPIO_MODER_MODE3_1);
     USART_PORT->OSPEEDR |= (GPIO_OSPEEDR_OSPEED2 | GPIO_OSPEEDR_OSPEED3);
     USART_PORT->PUPDR &= ~(GPIO_PUPDR_PUPD2 | GPIO_PUPDR_PUPD3);
@@ -61,6 +61,14 @@ void uart_send_string(const char* str) {
 void uart_send_escape(const char* str) {
     uart_send_char(ESC_CHAR);
     uart_send_string(str);
+
+    return;
+}
+
+
+void uart_clear_screen(void) {
+    uart_send_escape("[2J");
+    uart_send_escape("[H");
 
     return;
 }
