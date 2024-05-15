@@ -1,4 +1,4 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	2
 ../Core/Src/ADC.c:10:6:ADC_pin_init	1
 ../Core/Src/ADC.c:19:6:ADC_init	4
-../Core/Src/ADC.c:58:11:ADC_to_mv	2
+../Core/Src/ADC.c:52:11:ADC_to_mv	2

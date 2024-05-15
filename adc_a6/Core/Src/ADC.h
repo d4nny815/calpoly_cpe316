@@ -20,6 +20,5 @@
 
 void ADC_pin_init(void);
 void ADC_init(void);
-// void ADC_start_conversion(void);
- uint16_t ADC_to_mv(uint16_t val);
+uint16_t ADC_to_mv(uint16_t val);
 #endif /* SRC_ADC_H_ */

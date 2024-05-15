@@ -49,14 +49,10 @@ void ADC_init() {
     return;
 }
 
-// // ! make this a MACRO
-// void ADC_start_conversion() {
-//     ADC1->CR |= ADC_CR_ADSTART; 
-//     return;
-// }
-
  uint16_t ADC_to_mv(uint16_t val) {
      return val * VREF / ADC_REF;
+
+     // This from the linear calibration but I noticed better accuracy with the ideal conversion
 //     int32_t uv = val * MAGIC_CAL_X - MAGIC_CAL_Y;
 //     return uv > 0 ? uv / UV_TO_MV : 0;
  }

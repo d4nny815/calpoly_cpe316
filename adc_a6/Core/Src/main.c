@@ -18,14 +18,11 @@
 #include "main.h"
 #include "ADC.h"
 #include "uart.h"
-#include "danny_std.h"
-#include "stdio.h"
-#include "string.h"
 
 uint16_t get_min_arr(uint16_t *arr, int size);
 uint16_t get_max_arr(uint16_t *arr, int size);
 uint16_t get_avg_arr(uint16_t *arr, int size);
-void print_screen(int ind, uint16_t* arr, int arr_size);
+void mv_to_v_string(char* str, uint16_t mv);
 
 #define ADC_ARRAY_SIZE 20
 volatile int adc_flag = 0;
@@ -33,7 +30,6 @@ volatile uint16_t adc_value;
 
 
 void SystemClock_Config(void);
-void delay(uint32_t time);
 
 int main(void) {
     HAL_Init();
@@ -42,14 +38,12 @@ int main(void) {
     uart_init();
     ADC_init();
 
-
-    uint16_t adc_values[ADC_ARRAY_SIZE] = {0};
+    uint16_t adc_values[ADC_ARRAY_SIZE];
     int adc_values_index = 0;
 
     uint16_t min, max, avg;
-    char uart_string_buffer[6];
+    char voltage_str_buffer[6];
 
-    uart_send_string("starting");
     ADC_start_conversion();
 
     while (1) {
@@ -68,21 +62,17 @@ int main(void) {
                 max = ADC_to_mv(max);
                 avg = ADC_to_mv(avg);
 
-                // sprintf(uart_string_budelay(10000);ffer, "Min: %hu, Max: %hu, Avg: %hu\n", min, max, avg); // just here for debug rn
-                // uart_send_string(uart_string_buffer);
-//                uart_clear_screen();
                 uart_send_escape("[H");
                 uart_send_string("Min: ");
-                mv_to_v_string(uart_string_buffer, min);
-                uart_send_string(uart_string_buffer);
+                mv_to_v_string(voltage_str_buffer, min);
+                uart_send_string(voltage_str_buffer);
                 uart_send_string(" Max: ");
-                mv_to_v_string(uart_string_buffer, max);
-                uart_send_string(uart_string_buffer);
+                mv_to_v_string(voltage_str_buffer, max);
+                uart_send_string(voltage_str_buffer);
                 uart_send_string(" Avg: ");
-                mv_to_v_string(uart_string_buffer, avg);
-                uart_send_string(uart_string_buffer);
+                mv_to_v_string(voltage_str_buffer, avg);
+                uart_send_string(voltage_str_buffer);
 
-                delay(50000);
             }
 
             adc_flag = 0;
@@ -92,17 +82,23 @@ int main(void) {
     }
 
 
-
     return 0;
 }
 
 void ADC1_2_IRQHandler() {
     adc_flag = 1;
     adc_value = ADC1->DR;
-    // if (ADC1->ISR & ADC_ISR_EOC) {
-        // adc_flag = 1;
-        // adc_value = ADC1->DR;
-    // }
+
+    return;
+}
+
+void mv_to_v_string(char* str, uint16_t mv) {
+    str[0] = (mv / 1000) + '0';
+    str[1] = '.';
+    str[2] = ((mv % 1000) / 100) + '0';
+    str[3] = ((mv % 100) / 10) + '0';
+    str[4] = 'V';
+    str[5] = '\0';
 
     return;
 }
@@ -134,12 +130,6 @@ uint16_t get_avg_arr(uint16_t *arr, int size) {
     }
     return sum / size;
 }
-
-
-void delay(uint32_t time) {
-    for (uint32_t i = 0; i < time; i++);
-}
-
 
 
 
