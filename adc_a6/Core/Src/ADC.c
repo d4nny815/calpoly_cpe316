@@ -23,7 +23,8 @@ void ADC_init() {
     ADC123_COMMON->CCR |= (1 << ADC_CCR_CKMODE_Pos); // HCLK / 1
     ADC1->CR &= ~ADC_CR_DEEPPWD; // wake up from deep-power-down mode
     ADC1->CR |= ADC_CR_ADVREGEN; // turn on voltage regulator
-    for (int _=0; _<100; _++); // wait for regulator to start up (!only works for 4MHz)
+    for (int _=0; _<100; _++); // wait for regulator to start up 
+    // ! for 4MHz but will work for higher freqs
 
     ADC1->CR &= ~ADC_CR_ADCALDIF; // single-ended calibration
     ADC1->CR |= ADC_CR_ADCAL; // start calibration
@@ -37,7 +38,9 @@ void ADC_init() {
 
     ADC1->CFGR = 0; // single conversion, right-aligned data, 12-bit resolution
     ADC1->SQR1 = (5 << ADC_SQR1_SQ1_Pos); // one conversion in sequence
-    ADC1->SMPR1 = (2 << ADC_SMPR1_SMP5_Pos); // 12.5 clock sample on channel 5
+    ADC1->SMPR1 = ~ADC_SMPR1_SMP5_Msk; // 2.5 clock sample on channel 5
+//    ADC1->SMPR1 = (7 << ADC_SMPR1_SMP5_Pos); // 640.5 clock sample on channel 5
+//    ADC1->SMPR1 = (4 << ADC_SMPR1_SMP5_Pos); // 47.5 clock sample on channel 5
 
     ADC1->IER |= ADC_IER_EOCIE; // enable end-of-conversion interrupt
     NVIC_EnableIRQ(ADC1_IRQn); // enable ADC interrupt
@@ -46,14 +49,16 @@ void ADC_init() {
     return;
 }
 
-// ! make this a MACRO
-void ADC_start_conversion() {
-    ADC1->CR |= ADC_CR_ADSTART; 
-    return;
-}
+// // ! make this a MACRO
+// void ADC_start_conversion() {
+//     ADC1->CR |= ADC_CR_ADSTART; 
+//     return;
+// }
 
-uint16_t adc_to_mv(uint16_t val) {
-    return val * VREF / ADC_REF;
-}
+ uint16_t ADC_to_mv(uint16_t val) {
+     return val * VREF / ADC_REF;
+//     int32_t uv = val * MAGIC_CAL_X - MAGIC_CAL_Y;
+//     return uv > 0 ? uv / UV_TO_MV : 0;
+ }
 
 

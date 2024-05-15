@@ -15,11 +15,12 @@
   *
   ******************************************************************************
   */
-
 #include "main.h"
 #include "ADC.h"
 #include "uart.h"
+#include "danny_std.h"
 #include "stdio.h"
+#include "string.h"
 
 uint16_t get_min_arr(uint16_t *arr, int size);
 uint16_t get_max_arr(uint16_t *arr, int size);
@@ -41,13 +42,12 @@ int main(void) {
     uart_init();
     ADC_init();
 
-//    uint32_t iter = 0;
 
     uint16_t adc_values[ADC_ARRAY_SIZE] = {0};
     int adc_values_index = 0;
 
     uint16_t min, max, avg;
-    char uart_string_buffer[100];
+    char uart_string_buffer[6];
 
     uart_send_string("starting");
     ADC_start_conversion();
@@ -64,22 +64,30 @@ int main(void) {
                 max = get_max_arr(adc_values, ADC_ARRAY_SIZE);
                 avg = get_avg_arr(adc_values, ADC_ARRAY_SIZE);
 
-                min = adc_to_mv(min);
-                max = adc_to_mv(max);
-                avg = adc_to_mv(avg);
+                min = ADC_to_mv(min);
+                max = ADC_to_mv(max);
+                avg = ADC_to_mv(avg);
 
-                sprintf(uart_string_buffer, "Min: %hu, Max: %hu, Avg: %hu\n", min, max, avg); // just here for debug rn
-                uart_clear_screen();
+                // sprintf(uart_string_budelay(10000);ffer, "Min: %hu, Max: %hu, Avg: %hu\n", min, max, avg); // just here for debug rn
+                // uart_send_string(uart_string_buffer);
+//                uart_clear_screen();
+                uart_send_escape("[H");
+                uart_send_string("Min: ");
+                mv_to_v_string(uart_string_buffer, min);
+                uart_send_string(uart_string_buffer);
+                uart_send_string(" Max: ");
+                mv_to_v_string(uart_string_buffer, max);
+                uart_send_string(uart_string_buffer);
+                uart_send_string(" Avg: ");
+                mv_to_v_string(uart_string_buffer, avg);
                 uart_send_string(uart_string_buffer);
 
+                delay(50000);
             }
 
             adc_flag = 0;
             ADC_start_conversion();
         }
-
-//        for (uint32_t i = 0; i < 10000; i++);
-
 
     }
 
@@ -88,22 +96,14 @@ int main(void) {
     return 0;
 }
 
+void ADC1_2_IRQHandler() {
+    adc_flag = 1;
+    adc_value = ADC1->DR;
+    // if (ADC1->ISR & ADC_ISR_EOC) {
+        // adc_flag = 1;
+        // adc_value = ADC1->DR;
+    // }
 
-void print_screen(int ind, uint16_t* arr, int arr_size) {
-    char uart_string_buffer[1024];
-    char tmp[1024];
-
-    uart_send_escape("[2J");
-    uart_send_escape("[H");
-
-    sprintf(uart_string_buffer, "Index: %d\n", ind);
-
-    for (int i = 0; i < arr_size; i++) {
-        sprintf(tmp, "%d: %hu ", i, arr[i]);
-        strcat(uart_string_buffer, tmp);
-    }
-
-    uart_send_string(uart_string_buffer);
     return;
 }
 
@@ -141,17 +141,6 @@ void delay(uint32_t time) {
 }
 
 
-void ADC1_2_IRQHandler() {
-    if (ADC1->ISR & ADC_ISR_EOC) {
-        adc_flag = 1;
-        adc_value = ADC1->DR;
-
-//        ADC1->ISR |= ADC_ISR_EOC;
-    }
-
-    return;
-}
-
 
 
 /**
@@ -177,7 +166,13 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
   RCC_OscInitStruct.MSICalibrationValue = 0;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 20;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -187,12 +182,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_MSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }

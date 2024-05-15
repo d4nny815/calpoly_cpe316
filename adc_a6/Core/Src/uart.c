@@ -37,8 +37,8 @@ void uart_init(void) {
     USART2->CR1 |= USART_CR1_UE;   // enable USART2
 
     // clear screen and reset cursor
-    uart_send_escape("[2J");
-    uart_send_escape("[H");
+    uart_clear_screen();
+    uart_send_escape("[?25l");
     return;
 }
 

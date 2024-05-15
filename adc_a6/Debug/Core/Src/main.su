@@ -1,9 +1,8 @@
-../Core/Src/main.c:37:5:main	168	static
-../Core/Src/main.c:92:6:print_screen	2080	static
+../Core/Src/main.c:38:5:main	72	static
+../Core/Src/main.c:99:6:ADC1_2_IRQHandler	4	static
 ../Core/Src/main.c:110:10:get_min_arr	24	static
 ../Core/Src/main.c:120:10:get_max_arr	24	static
 ../Core/Src/main.c:130:10:get_avg_arr	24	static
 ../Core/Src/main.c:139:6:delay	24	static
-../Core/Src/main.c:144:6:ADC1_2_IRQHandler	4	static
-../Core/Src/main.c:161:6:SystemClock_Config	96	static
-../Core/Src/main.c:209:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:150:6:SystemClock_Config	96	static
+../Core/Src/main.c:204:6:Error_Handler	4	static,ignoring_inline_asm

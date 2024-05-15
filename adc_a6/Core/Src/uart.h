@@ -12,7 +12,8 @@
 #define USART_PORT GPIOA
 #define USART_AF 7
 #define USART_BAUD 115200
-#define CPU_FREQ 4000000
+//#define CPU_FREQ 40000000
+#define CPU_FREQ (unsigned long)40e6
 #define USART_BRR (int)(CPU_FREQ / USART_BAUD)
 #define ESC_CHAR (char)0x1B
 
