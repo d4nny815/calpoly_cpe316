@@ -20,9 +20,30 @@
 
 #include "main.h"
 #include "arm_math.h"
-void SystemClock_Config(void);
+#include "timer.h"
+#include "ADC.h"
+#include "uart.h"
+#include "stdio.h"
 
-#define FFT_SIZE 256
+#define SAMPLING_PERIOD 10e-6
+#define SAMPLING_RATE (uint32_t)(1/SAMPLING_PERIOD)
+#define FFT_SIZE 2048
+#define FFT_SIZE_DIV_2 (FFT_SIZE/2)
+#define FFT_SIZE_DIV_4 (FFT_SIZE/4)
+#define FFT_SIZE_MASK (FFT_SIZE - 1)
+#define FFT_HALF_POINT (FFT_SIZE_DIV_2 - 1)
+#define FFT_FULL_POINT (0)
+#define FREQ_STR_LEN 10
+
+
+q15_t ADC_VALS[FFT_SIZE];
+q15_t* p_ADC_VALS_half1 = ADC_VALS;
+q15_t* p_ADC_VALS_half2 = ADC_VALS + FFT_SIZE_DIV_2;
+volatile size_t adc_ind = 0;
+volatile int adc_read_flag = 0;
+volatile int adc_read_val;
+
+void SystemClock_Config(void);
 
 /**
   * @brief  The application entry point.
@@ -32,23 +53,72 @@ int main(void) {
     HAL_Init();
     SystemClock_Config();
 
-    arm_rfft_fast_instance_f32 rfft_instance;
-    arm_status status = arm_rfft_fast_init_f32(&rfft_instance, FFT_SIZE);
+    // init stuff
+    ADC_init();
+    uart_init();
+    arm_rfft_instance_q15 rfft_instance;
+    arm_status status = arm_rfft_init_q15(&rfft_instance, FFT_SIZE_DIV_2, 0, 1);
     while (status != ARM_MATH_SUCCESS) {
-        status = arm_rfft_fast_init_f32(&rfft_instance, FFT_SIZE);
+        status = arm_rfft_init_q15(&rfft_instance, FFT_SIZE_DIV_2, 0, 1);
     }
+    timer_init(SAMPLING_RATE);
 
+    // actual code
+    uint32_t freq;
+    q15_t FFT_OUT[FFT_SIZE];
+    q15_t MAG_OUT[FFT_SIZE_DIV_2];
+    q15_t max;
+    uint32_t max_ind;
+    char freq_str[FREQ_STR_LEN];
 
     while (1) {
+        if (adc_read_flag) {
+            if (adc_ind == 0) {
+//                arm_rfft_q15(&rfft_instance, ADC_VALS + FFT_SIZE_DIV_2, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, FFT_OUT);
+            }
 
+            else if (adc_ind == FFT_SIZE_DIV_2) {
+//                arm_rfft_q15(&rfft_instance, ADC_VALS, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, FFT_OUT);
+            }
 
-
+            arm_cmplx_mag_q15(FFT_OUT, MAG_OUT, FFT_SIZE_DIV_2);
+            MAG_OUT[0] = 0;
+            arm_max_q15(MAG_OUT, FFT_SIZE_DIV_4, &max, &max_ind);
+            freq = max_ind * SAMPLING_RATE / FFT_SIZE_DIV_2;
+            
+            snprintf(freq_str, FREQ_STR_LEN, "%ld", freq);
+            uart_clear_screen();
+            uart_send_string(freq_str);
+            
+            adc_read_flag = 0;
+        }
 
     }
 
 
     return 0;
 }
+
+
+void TIM2_IRQHandler() {
+    ADC_start_conversion();
+    TIM2->SR &= ~TIM_SR_UIF;
+    return;
+}
+
+void ADC1_2_IRQHandler() {
+    ADC_VALS[adc_ind] = ADC1->DR << 3;
+    adc_ind = (adc_ind + 1) & FFT_SIZE_MASK;
+    adc_read_flag = (adc_ind == FFT_HALF_POINT || adc_ind == FFT_FULL_POINT);
+
+    return;
+}
+
+
+
+
 
 /**
   * @brief System Clock Configuration
