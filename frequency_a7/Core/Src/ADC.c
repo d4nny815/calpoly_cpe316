@@ -36,9 +36,9 @@ void ADC_init() {
     ADC1->CR |= ADC_CR_ADEN; // enable ADC
     while (!(ADC1->ISR & ADC_ISR_ADRDY)); // wait for ADC to be ready
 
-    // ADC1->OFR1 = (ADC_OFR1_OFFSET1_EN | 5 << ADC_OFR1_OFFSET1_CH_Pos | (0xffc << ADC_OFR1_OFFSET1_Pos)); // offset calibration
-    // ADC1->CFGR = (ADC_CFGR_ALIGN); // single conversion, left-aligned data, 12-bit resolution
-    ADC1->CFGR = 0; // single conversion, right-aligned data, 12-bit resolution
+    // ADC1->CFGR = 0; // single conversion, right-aligned data, 12-bit resolution
+    ADC1->OFR1 = (ADC_OFR1_OFFSET1_EN | 5 << ADC_OFR1_OFFSET1_CH_Pos | (3 << ADC_OFR1_OFFSET1_Pos)); // offset calibration
+    ADC1->CFGR = (ADC_CFGR_ALIGN); // single conversion, left-aligned data, 12-bit resolution
     ADC1->SQR1 = (5 << ADC_SQR1_SQ1_Pos); // one conversion in sequence
     ADC1->SMPR1 = (4 << ADC_SMPR1_SMP5_Pos); // 47.5 clock sample on channel 5
 

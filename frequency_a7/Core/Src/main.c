@@ -25,9 +25,10 @@
 #include "uart.h"
 #include "stdio.h"
 
-#define SAMPLING_PERIOD 10e-6
+#define SAMPLING_PERIOD 250e-6
 #define SAMPLING_RATE (uint32_t)(1/SAMPLING_PERIOD)
 #define FFT_SIZE 2048
+//#define FFT_SIZE 4096
 #define FFT_SIZE_DIV_2 (FFT_SIZE/2)
 #define FFT_SIZE_DIV_4 (FFT_SIZE/4)
 #define FFT_SIZE_MASK (FFT_SIZE - 1)
@@ -74,17 +75,15 @@ int main(void) {
     while (1) {
         if (adc_read_flag) {
             if (adc_ind == 0) {
-//                arm_rfft_q15(&rfft_instance, ADC_VALS + FFT_SIZE_DIV_2, FFT_OUT);
                 arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, FFT_OUT);
             }
 
             else if (adc_ind == FFT_SIZE_DIV_2) {
-//                arm_rfft_q15(&rfft_instance, ADC_VALS, FFT_OUT);
                 arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, FFT_OUT);
             }
 
             arm_cmplx_mag_q15(FFT_OUT, MAG_OUT, FFT_SIZE_DIV_2);
-            MAG_OUT[0] = 0;
+            MAG_OUT[0] = 0; // kill DC component
             arm_max_q15(MAG_OUT, FFT_SIZE_DIV_4, &max, &max_ind);
             freq = max_ind * SAMPLING_RATE / FFT_SIZE_DIV_2;
             
@@ -109,7 +108,7 @@ void TIM2_IRQHandler() {
 }
 
 void ADC1_2_IRQHandler() {
-    ADC_VALS[adc_ind] = ADC1->DR << 3;
+    ADC_VALS[adc_ind] = ADC1->DR;
     adc_ind = (adc_ind + 1) & FFT_SIZE_MASK;
     adc_read_flag = (adc_ind == FFT_HALF_POINT || adc_ind == FFT_FULL_POINT);
 
