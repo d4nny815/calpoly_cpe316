@@ -34,12 +34,12 @@
 #define FFT_SIZE_MASK (FFT_SIZE - 1)
 #define FFT_HALF_POINT (FFT_SIZE_DIV_2 - 1)
 #define FFT_FULL_POINT (0)
-#define FREQ_STR_LEN 10
+#define FREQ_STR_LEN 20
 
 
-q15_t ADC_VALS[FFT_SIZE];
-q15_t* p_ADC_VALS_half1 = ADC_VALS;
-q15_t* p_ADC_VALS_half2 = ADC_VALS + FFT_SIZE_DIV_2;
+q15_t adc_vals[FFT_SIZE];
+q15_t* p_ADC_VALS_half1 = adc_vals;
+q15_t* p_ADC_VALS_half2 = adc_vals + FFT_SIZE_DIV_2;
 volatile size_t adc_ind = 0;
 volatile int adc_read_flag = 0;
 volatile int adc_read_val;
@@ -66,8 +66,8 @@ int main(void) {
 
     // actual code
     uint32_t freq;
-    q15_t FFT_OUT[FFT_SIZE];
-    q15_t MAG_OUT[FFT_SIZE_DIV_2];
+    q15_t fft_out[FFT_SIZE];
+    q15_t mag_out[FFT_SIZE_DIV_2];
     q15_t max;
     uint32_t max_ind;
     char freq_str[FREQ_STR_LEN];
@@ -75,19 +75,19 @@ int main(void) {
     while (1) {
         if (adc_read_flag) {
             if (adc_ind == 0) {
-                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, fft_out);
             }
 
             else if (adc_ind == FFT_SIZE_DIV_2) {
-                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, fft_out);
             }
 
-            arm_cmplx_mag_q15(FFT_OUT, MAG_OUT, FFT_SIZE_DIV_2);
+            arm_cmplx_mag_q15(fft_out, mag_out, FFT_SIZE_DIV_2);
             MAG_OUT[0] = 0; // kill DC component
-            arm_max_q15(MAG_OUT, FFT_SIZE_DIV_4, &max, &max_ind);
+            arm_max_q15(mag_out, FFT_SIZE_DIV_4, &max, &max_ind);
             freq = max_ind * SAMPLING_RATE / FFT_SIZE_DIV_2;
             
-            snprintf(freq_str, FREQ_STR_LEN, "%ld", freq);
+            snprintf(freq_str, FREQ_STR_LEN, "Freq: %ld Hz", freq);
             uart_clear_screen();
             uart_send_string(freq_str);
             
@@ -108,7 +108,7 @@ void TIM2_IRQHandler() {
 }
 
 void ADC1_2_IRQHandler() {
-    ADC_VALS[adc_ind] = ADC1->DR;
+    adc_vals[adc_ind] = ADC1->DR;
     adc_ind = (adc_ind + 1) & FFT_SIZE_MASK;
     adc_read_flag = (adc_ind == FFT_HALF_POINT || adc_ind == FFT_FULL_POINT);
 
