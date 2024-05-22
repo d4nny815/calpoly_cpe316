@@ -499,7 +499,7 @@ int main(void) {
  8000510:	681b      	ldr	r3, [r3, #0]
  8000512:	2b00      	cmp	r3, #0
  8000514:	d109      	bne.n	800052a <main+0x8e>
-                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half2, fft_out);
  8000516:	4b2f      	ldr	r3, [pc, #188]	@ (80005d4 <main+0x138>)
  8000518:	6819      	ldr	r1, [r3, #0]
  800051a:	f507 6202 	add.w	r2, r7, #2080	@ 0x820
@@ -514,7 +514,7 @@ int main(void) {
  800052c:	681b      	ldr	r3, [r3, #0]
  800052e:	f5b3 6f80 	cmp.w	r3, #1024	@ 0x400
  8000532:	d108      	bne.n	8000546 <main+0xaa>
-                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, FFT_OUT);
+                arm_rfft_q15(&rfft_instance, p_ADC_VALS_half1, fft_out);
  8000534:	4b28      	ldr	r3, [pc, #160]	@ (80005d8 <main+0x13c>)
  8000536:	6819      	ldr	r1, [r3, #0]
  8000538:	f507 6202 	add.w	r2, r7, #2080	@ 0x820
@@ -523,18 +523,18 @@ int main(void) {
  8000542:	f001 fb23 	bl	8001b8c <arm_rfft_q15>
             }
 
-            arm_cmplx_mag_q15(FFT_OUT, MAG_OUT, FFT_SIZE_DIV_2);
+            arm_cmplx_mag_q15(fft_out, mag_out, FFT_SIZE_DIV_2);
  8000546:	f107 0120 	add.w	r1, r7, #32
  800054a:	f507 6302 	add.w	r3, r7, #2080	@ 0x820
  800054e:	f44f 6280 	mov.w	r2, #1024	@ 0x400
  8000552:	4618      	mov	r0, r3
  8000554:	f001 fc00 	bl	8001d58 <arm_cmplx_mag_q15>
-            MAG_OUT[0] = 0; // kill DC component
+            mag_out[0] = 0; // kill DC component
  8000558:	f507 6304 	add.w	r3, r7, #2112	@ 0x840
  800055c:	f5a3 6302 	sub.w	r3, r3, #2080	@ 0x820
  8000560:	2200      	movs	r2, #0
  8000562:	801a      	strh	r2, [r3, #0]
-            arm_max_q15(MAG_OUT, FFT_SIZE_DIV_4, &max, &max_ind);
+            arm_max_q15(mag_out, FFT_SIZE_DIV_4, &max, &max_ind);
  8000564:	f107 0320 	add.w	r3, r7, #32
  8000568:	3b08      	subs	r3, #8
  800056a:	f107 0220 	add.w	r2, r7, #32
@@ -618,7 +618,7 @@ void TIM2_IRQHandler() {
 void ADC1_2_IRQHandler() {
  8000610:	b480      	push	{r7}
  8000612:	af00      	add	r7, sp, #0
-    ADC_VALS[adc_ind] = ADC1->DR;
+    adc_vals[adc_ind] = ADC1->DR;
  8000614:	4b11      	ldr	r3, [pc, #68]	@ (800065c <ADC1_2_IRQHandler+0x4c>)
  8000616:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
  8000618:	4b11      	ldr	r3, [pc, #68]	@ (8000660 <ADC1_2_IRQHandler+0x50>)

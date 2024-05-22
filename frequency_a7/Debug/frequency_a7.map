@@ -3270,8 +3270,8 @@ LOAD /opt/st/stm32cubeide_1.15.0/plugins/com.st.stm32cube.ide.mcu.externaltools.
  *(.bss)
  .bss           0x20000064       0x1c /opt/st/stm32cubeide_1.15.0/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.12.3.rel1.linux64_1.0.100.202403111256/tools/bin/../lib/gcc/arm-none-eabi/12.3.1/thumb/v7e-m+fp/hard/crtbegin.o
  *(.bss*)
- .bss.ADC_VALS  0x20000080     0x1000 ./Core/Src/main.o
-                0x20000080                ADC_VALS
+ .bss.adc_vals  0x20000080     0x1000 ./Core/Src/main.o
+                0x20000080                adc_vals
  .bss.adc_ind   0x20001080        0x4 ./Core/Src/main.o
                 0x20001080                adc_ind
  .bss.adc_read_flag

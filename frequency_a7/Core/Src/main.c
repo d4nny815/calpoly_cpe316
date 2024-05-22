@@ -83,7 +83,7 @@ int main(void) {
             }
 
             arm_cmplx_mag_q15(fft_out, mag_out, FFT_SIZE_DIV_2);
-            MAG_OUT[0] = 0; // kill DC component
+            mag_out[0] = 0; // kill DC component
             arm_max_q15(mag_out, FFT_SIZE_DIV_4, &max, &max_ind);
             freq = max_ind * SAMPLING_RATE / FFT_SIZE_DIV_2;
             
