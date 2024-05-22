@@ -46,12 +46,14 @@ uint16_t get_avg_arr(uint16_t *arr, int size);
 
 
 // AC MODE STUFF 
+// FREQ STUFF
 #define FFT_SIZE (2048)
 #define FFT_SIZE_DIV_2 (FFT_SIZE/2)
 #define FFT_SIZE_MASK (FFT_SIZE - 1)
 #define SAMPLING_RATE ((uint32_t)(FFT_SIZE))
 #define FFT_CCR ((uint32_t)(CPU_FREQ/SAMPLING_RATE))
-
+// RMS STUFF
+#define RMS_SIZE FFT_SIZE
 
 #define LED1_ON() (GPIOC->BSRR = GPIO_BSRR_BS0)
 #define LED1_OFF() (GPIOC->BSRR = GPIO_BSRR_BR0)
@@ -59,8 +61,8 @@ uint16_t get_avg_arr(uint16_t *arr, int size);
 #define LED2_OFF() (GPIOC->BSRR = GPIO_BSRR_BR1)
 
 
-
 void timer_init();
+void rms_timer_add(uint32_t freq);
 
 typedef enum {
     DC_ST,
@@ -72,6 +74,8 @@ State_t state = AC_ST;
 volatile int working = 0;
 volatile int start_calcs = 0;
 volatile int fft_work = 0;
+volatile int rms_work = 0;
+volatile uint32_t rms_ccr;
 
 void SystemClock_Config(void);
 
@@ -111,7 +115,6 @@ int main(void) {
     size_t dc_ind = 0;
 
     uint16_t voltage;
-
     
     uint16_t freq;
     q15_t ac_adc_vals[FFT_SIZE];
@@ -120,6 +123,10 @@ int main(void) {
     q15_t mag_out[FFT_SIZE];
     q15_t max;
     uint32_t max_ind;
+
+    uint32_t rms_vals[RMS_SIZE];
+    size_t rms_ind = 0;
+    uint32_t rms_voltage;
 
 
     while (1) {
@@ -202,7 +209,35 @@ int main(void) {
                         freq = max_ind * SAMPLING_RATE / FFT_SIZE;
 
                         fft_work = 0;
+                        rms_work = 1;
+                        rms_timer_add(freq * RMS_SIZE);
+                        // new_screen = 1;
+                    }
+
+                    ADC_clear_flag();
+                }
+            }
+
+            if (rms_work) {
+                if (ADC_check_flag()) {
+                    rms_voltage = (get_ADC_val() >> 3) & 0xfff;
+                    rms_voltage = ADC_to_mv(rms_voltage);
+                    rms_vals[rms_ind] = rms_voltage * rms_voltage;
+                    rms_ind++;
+
+                    if (rms_ind == RMS_SIZE) {
+                        rms_ind = 0;
+
+                        uint32_t sum = 0;
+                        for (int i = 0; i < RMS_SIZE; i++) {
+                            sum += rms_vals[i];
+                        }
+
+                        rms_voltage = sqrt(sum / RMS_SIZE);
+                        // rms_voltage = sqrt(sum * freq);
+
                         new_screen = 1;
+                        rms_work = 0;
                     }
 
                     ADC_clear_flag();
@@ -238,6 +273,14 @@ void TIM2_IRQHandler() {
         TIM2->CCR2 += FFT_CCR;
         TIM2->SR &= ~TIM_SR_CC2IF;
     }
+    else if (TIM2->SR & TIM_SR_CC3IF) { // get adc samples for rms
+        if (state == AC_ST && rms_work) {
+            ADC_start_conversion();
+        }
+
+        TIM2->CCR3 += rms_ccr;
+        TIM2->SR &= ~TIM_SR_CC3IF;
+    }
 
 
     return;
@@ -260,6 +303,15 @@ void timer_init() {
     NVIC_EnableIRQ(TIM2_IRQn);
     __enable_irq();
     TIM2->CR1 |= TIM_CR1_CEN;
+
+    return;
+}
+
+void rms_timer_add(uint32_t freq) {
+    TIM2->DIER |= TIM_DIER_CC3IE;
+    TIM2->CCER |= TIM_CCER_CC3E;
+    rms_ccr = CPU_FREQ / freq;
+    TIM2->CCR3 = rms_ccr + TIM2->CNT;
 
     return;
 }
