@@ -31,7 +31,7 @@
 #define SCALE_CURSOR "[5;0H"
 #define FREQ_CURSOR "[9;12H"
 #define MOVE_CURSOR(x) uart_send_escape(x)
-#define PRINT_PERIOD_SEC (1.5f)
+#define PRINT_PERIOD_SEC (2.5f)
 #define PRINT_RATE ((double)(1 / PRINT_PERIOD_SEC))
 #define PRINT_CCR ((uint32_t)(CPU_FREQ/PRINT_RATE))
 void print_stats(int AC, uint16_t voltage, uint16_t freq);
@@ -53,29 +53,36 @@ uint16_t get_avg_arr(uint16_t *arr, int size);
 #define SAMPLING_RATE ((uint32_t)(FFT_SIZE))
 #define FFT_CCR ((uint32_t)(CPU_FREQ/SAMPLING_RATE))
 // RMS STUFF
-#define RMS_SIZE FFT_SIZE
+#define RMS_SIZE (1000)
+#define RMS_SAMPLE_TIME_SEC (1.0f)
+#define RMS_SAMPLE_RATE ((uint32_t)RMS_SIZE)
+#define RMS_CCR ((uint32_t)(CPU_FREQ/RMS_SAMPLE_RATE))
+uint16_t get_rms(uint16_t *arr, int size, uint16_t freq);
 
 #define LED1_ON() (GPIOC->BSRR = GPIO_BSRR_BS0)
 #define LED1_OFF() (GPIOC->BSRR = GPIO_BSRR_BR0)
 #define LED2_ON() (GPIOC->BSRR = GPIO_BSRR_BS1)
 #define LED2_OFF() (GPIOC->BSRR = GPIO_BSRR_BR1)
+#define LED3_ON() (GPIOC->BSRR = GPIO_BSRR_BS2)
+#define LED3_OFF() (GPIOC->BSRR = GPIO_BSRR_BR2)
 
 
 void timer_init();
 void rms_timer_add(uint32_t freq);
 
+
 typedef enum {
+    IDLE_ST,
     DC_ST,
-    AC_ST
+    FFT_ST,
+    VRMS_ST,
+    PRINT_ST
 } State_t;
+volatile State_t state = IDLE_ST;
+int AC = 1;
 
-State_t state = AC_ST;
 
-volatile int working = 0;
-volatile int start_calcs = 0;
-volatile int fft_work = 0;
-volatile int rms_work = 0;
-volatile uint32_t rms_ccr;
+// volatile uint32_t rms_ccr;
 
 void SystemClock_Config(void);
 
@@ -87,17 +94,17 @@ int main(void) {
     // * init  
     // helper led
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-    GPIOC->MODER &= ~(GPIO_MODER_MODE0 | GPIO_MODER_MODE1);
-    GPIOC->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE1_0;
-    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD0 | GPIO_PUPDR_PUPD1) ;
-    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT0 | GPIO_OTYPER_OT1);
-    GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED0 | GPIO_OSPEEDR_OSPEED1;
+    GPIOC->MODER &= ~(GPIO_MODER_MODE0 | GPIO_MODER_MODE1 | GPIO_MODER_MODE2);
+    GPIOC->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE1_0 | GPIO_MODER_MODE2_0;
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD0 | GPIO_PUPDR_PUPD1 | GPIO_PUPDR_PUPD2); ;
+    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT0 | GPIO_OTYPER_OT1 | GPIO_OTYPER_OT2);
+    GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED0 | GPIO_OSPEEDR_OSPEED1 | GPIO_OSPEEDR_OSPEED2;
     LED1_OFF();
     LED2_OFF();
+    LED3_OFF();
 
     uart_init();
     print_start_screen();
-    // print_stats(0, 2680, 333);
 
     ADC_init();
     arm_rfft_instance_q15 rfft_instance;
@@ -109,14 +116,12 @@ int main(void) {
     timer_init();
 
     // * real work
-    int new_screen = 0;
+    uint16_t voltage;
+    uint16_t freq;
 
-    uint16_t adc_vals[DC_VOLT_SIZE];
+    uint16_t dc_adc_vals[DC_VOLT_SIZE];
     size_t dc_ind = 0;
 
-    uint16_t voltage;
-    
-    uint16_t freq;
     q15_t ac_adc_vals[FFT_SIZE];
     size_t ac_ind = 0;
     q15_t fft_out[FFT_SIZE * 2];
@@ -124,60 +129,29 @@ int main(void) {
     q15_t max;
     uint32_t max_ind;
 
-    uint32_t rms_vals[RMS_SIZE];
-    size_t rms_ind = 0;
-    uint32_t rms_voltage;
+//    uint16_t rms_vals[RMS_SIZE];
+//    size_t rms_ind = 0;
+//    uint16_t rms_voltage;
 
 
     while (1) {
-        // change mode
-        if (uart_check_flag()) { 
-            switch (get_uart_char()) {
-            case 'd':
-                // print_stats(0, 263, 3133);
-                // ADC_start_conversion();
-                working = 1;
-                state = DC_ST;
-                break;
-            case 'a':
-                // print_stats(1, 1720, 127);
-                working = 1;
-                state = AC_ST;
-                break;
-            default: break;
-            }
-            
-            uart_clear_flag();
-        } 
-
-        if (!working) continue; // idle
-
-        if (start_calcs) {
-            start_calcs = 0;
-            fft_work = 1;
-            ADC_start_conversion();
-        }
-
         switch (state) {
-        case DC_ST:
-            if (new_screen) {
-                print_stats(0, voltage, 0);
-                new_screen = 0;
-                working = 0;
-            }
+        case IDLE_ST:
 
+            break;
+        case DC_ST:
             if (ADC_check_flag()) {
-                adc_vals[dc_ind] = (get_ADC_val() >> 3) & 0xfff;
+                dc_adc_vals[dc_ind] = (get_ADC_val() >> 3) & 0xfff;
                 dc_ind++;
                 
                 if (dc_ind == DC_VOLT_SIZE) { // done getting measurements
                     dc_ind = 0;
-                    voltage = get_avg_arr(adc_vals, DC_VOLT_SIZE);
+                    voltage = get_avg_arr(dc_adc_vals, DC_VOLT_SIZE);
                     voltage = ADC_to_mv(voltage);
-                    new_screen = 1;
 
 
                     ADC_clear_flag();
+                    state = PRINT_ST;
                     break;
                 }
 
@@ -186,87 +160,74 @@ int main(void) {
             }
 
             break;
-        case AC_ST:
-            if (new_screen) {
-                print_stats(1, 1200, freq);
-                new_screen = 0;
-                working = 0;
-                LED1_OFF();
-            }
+        case FFT_ST:
+            if (ADC_check_flag()) {
+                ac_adc_vals[ac_ind] = get_ADC_val();
+                ac_ind++;
+                if (ac_ind == FFT_SIZE) {
+                    ac_ind = 0;
+                    arm_rfft_q15(&rfft_instance, ac_adc_vals, fft_out);
+                    arm_cmplx_mag_q15(fft_out, mag_out, FFT_SIZE);
+                    mag_out[0] = 0;
+                    arm_max_q15(mag_out, FFT_SIZE_DIV_2, &max, &max_ind);
+                    freq = max_ind * SAMPLING_RATE / FFT_SIZE;
 
-            if (fft_work) {
-                if (ADC_check_flag()) {
-                    ac_adc_vals[ac_ind] = get_ADC_val();
-                    ac_ind++;
-
-                    if (ac_ind == FFT_SIZE) {
-                        ac_ind = 0;
-
-                        arm_rfft_q15(&rfft_instance, ac_adc_vals, fft_out);
-                        arm_cmplx_mag_q15(fft_out, mag_out, FFT_SIZE);
-                        mag_out[0] = 0;
-                        arm_max_q15(mag_out, FFT_SIZE_DIV_2, &max, &max_ind);
-                        freq = max_ind * SAMPLING_RATE / FFT_SIZE;
-
-                        fft_work = 0;
-                        rms_work = 1;
-                        rms_timer_add(freq * RMS_SIZE);
-                        // new_screen = 1;
-                    }
-
-                    ADC_clear_flag();
+                    LED2_OFF();
+                    LED3_ON();
+                    state = VRMS_ST;
                 }
-            }
-
-            if (rms_work) {
-                if (ADC_check_flag()) {
-                    rms_voltage = (get_ADC_val() >> 3) & 0xfff;
-                    rms_voltage = ADC_to_mv(rms_voltage);
-                    rms_vals[rms_ind] = rms_voltage * rms_voltage;
-                    rms_ind++;
-
-                    if (rms_ind == RMS_SIZE) {
-                        rms_ind = 0;
-
-                        uint32_t sum = 0;
-                        for (int i = 0; i < RMS_SIZE; i++) {
-                            sum += rms_vals[i];
-                        }
-
-                        rms_voltage = sqrt(sum / RMS_SIZE);
-                        // rms_voltage = sqrt(sum * freq);
-
-                        new_screen = 1;
-                        rms_work = 0;
-                    }
-
-                    ADC_clear_flag();
-                }
+                ADC_clear_flag();
             }
 
             break;
-        }
+        case VRMS_ST:
+            if (ADC_check_flag()) {
+                ac_adc_vals[ac_ind] = (get_ADC_val() >> 3) & 0xfff;
+                ac_ind++;
+                if (ac_ind == RMS_SIZE) {
+                    ac_ind = 0;
+                    // voltage = get_rms(ac_adc_vals, RMS_SIZE, freq); // returns in 12b ADC val
+                    // rms_voltage = get_avg_arr(rms_vals, RMS_SIZE);
+                    // rms_voltage = ADC_to_mv(rms_voltage); 
+                    // voltage = rms_voltage;
+                    voltage = 1200;
+                    LED3_OFF();
+                    state = PRINT_ST;
+                }
+                ADC_clear_flag();
+            }
 
-        
+            break;
+        case PRINT_ST:
+            print_stats(AC, voltage, freq);
+            state = IDLE_ST;
+            LED1_OFF();
+            break;
+        } 
     }
 
     return 0;
 }
 
+
+
 void TIM2_IRQHandler() {
     if (TIM2->SR & TIM_SR_CC1IF) { // print interval
-        LED2_ON();
         LED1_ON();
-        working = 1;
-        start_calcs = 1;
-        // if (state == DC_ST) ADC_start_conversion();
+        LED2_ON();
+        if (AC) {
+            state = FFT_ST;
+        }
+        else {
+            state = DC_ST;
+        } 
 
         TIM2->CCR1 += PRINT_CCR;
         TIM2->SR &= ~TIM_SR_CC1IF;
-        LED2_OFF();
+        LED1_OFF();
     }
     else if (TIM2->SR & TIM_SR_CC2IF) { // get adc samples for fft
-        if (state == AC_ST && fft_work) {
+        if (state == FFT_ST) {
             ADC_start_conversion();
         }
 
@@ -274,13 +235,13 @@ void TIM2_IRQHandler() {
         TIM2->SR &= ~TIM_SR_CC2IF;
     }
     else if (TIM2->SR & TIM_SR_CC3IF) { // get adc samples for rms
-        if (state == AC_ST && rms_work) {
+        if (state == VRMS_ST) {
             ADC_start_conversion();
         }
 
-        TIM2->CCR3 += rms_ccr;
+        TIM2->CCR3 += RMS_CCR;
         TIM2->SR &= ~TIM_SR_CC3IF;
-    }
+     }
 
 
     return;
@@ -294,9 +255,10 @@ void timer_init() {
     TIM2->ARR = -1;
     TIM2->CCR1 = PRINT_CCR - 1;
     TIM2->CCR2 = FFT_CCR - 1;
+    TIM2->CCR3 = RMS_CCR - 1;
     TIM2->PSC = 0;
-    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE;
-    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E;
+    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE;
+    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E;
 
     DBGMCU->APB1FZR1 |= 1;
 
@@ -307,14 +269,17 @@ void timer_init() {
     return;
 }
 
-void rms_timer_add(uint32_t freq) {
-    TIM2->DIER |= TIM_DIER_CC3IE;
-    TIM2->CCER |= TIM_CCER_CC3E;
-    rms_ccr = CPU_FREQ / freq;
-    TIM2->CCR3 = rms_ccr + TIM2->CNT;
 
-    return;
-}
+//void rms_timer_add(uint32_t freq) {
+//
+//    TIM2->DIER |= TIM_DIER_CC3IE;
+//    TIM2->CCER |= TIM_CCER_CC3E;
+//    freq = freq * RMS_SIZE;
+//    rms_ccr = CPU_FREQ / freq;
+//    TIM2->CCR3 = rms_ccr + TIM2->CNT;
+//
+//    return;
+//}
 
 
 void print_stats(int AC, uint16_t voltage, uint16_t freq) {
@@ -375,6 +340,7 @@ void mv_to_str(char* buffer, uint16_t volt) {
     return;
 }
 
+
 uint16_t get_avg_arr(uint16_t *arr, int size) {
     uint32_t sum = 0;
     for (int i = 0; i < size; i++) {
@@ -384,7 +350,36 @@ uint16_t get_avg_arr(uint16_t *arr, int size) {
 }
 
 
+uint16_t get_rms(uint16_t *arr, int size, uint16_t freq) {
+    uint32_t sum = 0; // in mV
+    uint16_t mv;
+    for (int i = 0; i < size; i++) {
+        mv = ADC_to_mv(arr[i]);
+        sum += mv * mv;
+    }
 
+    sum = sqrt((double)sum * freq);
+    return sum;
+}
+
+// if (uart_check_flag()) { 
+//             switch (get_uart_char()) {
+//             case 'd':
+//                 // print_stats(0, 263, 3133);
+//                 // ADC_start_conversion();
+//                 working = 1;
+//                 state = DC_ST;
+//                 break;
+//             case 'a':
+//                 // print_stats(1, 1720, 127);
+//                 working = 1;
+//                 state = AC_ST;
+//                 break;
+//             default: break;
+//             }
+            
+//             uart_clear_flag();
+//         } 
 
 
 /**
