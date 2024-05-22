@@ -173,8 +173,8 @@ int main(void) {
                     freq = max_ind * SAMPLING_RATE / FFT_SIZE;
 
                     LED2_OFF();
-                    LED3_ON();
-                    state = VRMS_ST;
+//                    LED3_ON();
+                    state = PRINT_ST;
                 }
                 ADC_clear_flag();
             }
@@ -191,7 +191,7 @@ int main(void) {
                     // rms_voltage = ADC_to_mv(rms_voltage); 
                     // voltage = rms_voltage;
                     voltage = 1200;
-                    LED3_OFF();
+//                    LED3_OFF();
                     state = PRINT_ST;
                 }
                 ADC_clear_flag();
