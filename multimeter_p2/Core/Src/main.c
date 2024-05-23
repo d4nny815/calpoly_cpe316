@@ -31,7 +31,7 @@
 #define SCALE_CURSOR "[5;0H"
 #define FREQ_CURSOR "[9;12H"
 #define MOVE_CURSOR(x) uart_send_escape(x)
-#define PRINT_PERIOD_SEC (2.5f)
+#define PRINT_PERIOD_SEC (2.0f)
 #define PRINT_RATE ((double)(1 / PRINT_PERIOD_SEC))
 #define PRINT_CCR ((uint32_t)(CPU_FREQ/PRINT_RATE))
 void print_stats(int AC, uint16_t voltage, uint16_t freq);
@@ -43,6 +43,8 @@ void mv_to_str(char* buffer, uint16_t volt);
 // DC MODE STUFF
 #define DC_VOLT_SIZE (1024)
 uint16_t get_avg_arr(uint16_t *arr, int size);
+uint16_t get_min_arr(uint16_t *arr, int size);
+uint16_t get_max_arr(uint16_t *arr, int size);
 
 
 // AC MODE STUFF 
@@ -53,11 +55,17 @@ uint16_t get_avg_arr(uint16_t *arr, int size);
 #define SAMPLING_RATE ((uint32_t)(FFT_SIZE))
 #define FFT_CCR ((uint32_t)(CPU_FREQ/SAMPLING_RATE))
 // RMS STUFF
-#define RMS_SIZE (1000)
-#define RMS_SAMPLE_TIME_SEC (1.0f)
+struct VoltStats_t {
+    uint16_t dc_mv;
+    uint16_t ac_mv;
+    uint16_t vpp_mv;
+    uint16_t true_rms_mv;
+};
+#define RMS_SIZE (FFT_SIZE)
+//#define RMS_SAMPLE_TIME_SEC (1.0f)
 #define RMS_SAMPLE_RATE ((uint32_t)RMS_SIZE)
 #define RMS_CCR ((uint32_t)(CPU_FREQ/RMS_SAMPLE_RATE))
-uint16_t get_rms(uint16_t *arr, int size, uint16_t freq);
+void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint16_t freq);
 
 #define LED1_ON() (GPIOC->BSRR = GPIO_BSRR_BS0)
 #define LED1_OFF() (GPIOC->BSRR = GPIO_BSRR_BR0)
@@ -65,10 +73,14 @@ uint16_t get_rms(uint16_t *arr, int size, uint16_t freq);
 #define LED2_OFF() (GPIOC->BSRR = GPIO_BSRR_BR1)
 #define LED3_ON() (GPIOC->BSRR = GPIO_BSRR_BS2)
 #define LED3_OFF() (GPIOC->BSRR = GPIO_BSRR_BR2)
+#define LED4_ON() (GPIOC->BSRR = GPIO_BSRR_BS3)
+#define LED4_OFF() (GPIOC->BSRR = GPIO_BSRR_BR3)
 
 
 void timer_init();
 void rms_timer_add(uint32_t freq);
+
+
 
 
 typedef enum {
@@ -80,6 +92,7 @@ typedef enum {
 } State_t;
 volatile State_t state = IDLE_ST;
 int AC = 1;
+volatile int working = 0;
 
 
 // volatile uint32_t rms_ccr;
@@ -94,14 +107,15 @@ int main(void) {
     // * init  
     // helper led
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-    GPIOC->MODER &= ~(GPIO_MODER_MODE0 | GPIO_MODER_MODE1 | GPIO_MODER_MODE2);
-    GPIOC->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE1_0 | GPIO_MODER_MODE2_0;
-    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD0 | GPIO_PUPDR_PUPD1 | GPIO_PUPDR_PUPD2); ;
-    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT0 | GPIO_OTYPER_OT1 | GPIO_OTYPER_OT2);
-    GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED0 | GPIO_OSPEEDR_OSPEED1 | GPIO_OSPEEDR_OSPEED2;
+    GPIOC->MODER &= ~(GPIO_MODER_MODE0 | GPIO_MODER_MODE1 | GPIO_MODER_MODE2 | GPIO_MODER_MODE3);
+    GPIOC->MODER |= GPIO_MODER_MODE0_0 | GPIO_MODER_MODE1_0 | GPIO_MODER_MODE2_0 | GPIO_MODER_MODE3_0;
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD0 | GPIO_PUPDR_PUPD1 | GPIO_PUPDR_PUPD2 | GPIO_PUPDR_PUPD3);
+    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT0 | GPIO_OTYPER_OT1 | GPIO_OTYPER_OT2 | GPIO_OTYPER_OT3);
+    GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED0 | GPIO_OSPEEDR_OSPEED1 | GPIO_OSPEEDR_OSPEED2 | GPIO_OSPEEDR_OSPEED3;
     LED1_OFF();
     LED2_OFF();
     LED3_OFF();
+    LED4_OFF();
 
     uart_init();
     print_start_screen();
@@ -129,9 +143,10 @@ int main(void) {
     q15_t max;
     uint32_t max_ind;
 
-//    uint16_t rms_vals[RMS_SIZE];
-//    size_t rms_ind = 0;
-//    uint16_t rms_voltage;
+
+    uint16_t rms_adc_vals[RMS_SIZE];
+    size_t rms_ind = 0;
+    struct VoltStats_t stats = {0, 0, 0, 0};
 
 
     while (1) {
@@ -141,6 +156,7 @@ int main(void) {
             break;
         case DC_ST:
             if (ADC_check_flag()) {
+                ADC_clear_flag();
                 dc_adc_vals[dc_ind] = (get_ADC_val() >> 3) & 0xfff;
                 dc_ind++;
                 
@@ -150,18 +166,21 @@ int main(void) {
                     voltage = ADC_to_mv(voltage);
 
 
-                    ADC_clear_flag();
+//                    ADC_clear_flag();
                     state = PRINT_ST;
                     break;
                 }
 
-                ADC_clear_flag();
                 ADC_start_conversion();
             }
 
             break;
         case FFT_ST:
+            LED2_ON();
             if (ADC_check_flag()) {
+                ADC_clear_flag();
+                if (!working) continue;
+
                 ac_adc_vals[ac_ind] = get_ADC_val();
                 ac_ind++;
                 if (ac_ind == FFT_SIZE) {
@@ -173,35 +192,38 @@ int main(void) {
                     freq = max_ind * SAMPLING_RATE / FFT_SIZE;
 
                     LED2_OFF();
-//                    LED3_ON();
-                    state = PRINT_ST;
+                    state = VRMS_ST;
+//                    state = PRINT_ST;
+//                    working = 0;
+                    ADC_ABORT_1();
                 }
-                ADC_clear_flag();
             }
 
             break;
         case VRMS_ST:
+            LED3_ON();
             if (ADC_check_flag()) {
-                ac_adc_vals[ac_ind] = (get_ADC_val() >> 3) & 0xfff;
-                ac_ind++;
-                if (ac_ind == RMS_SIZE) {
-                    ac_ind = 0;
-                    // voltage = get_rms(ac_adc_vals, RMS_SIZE, freq); // returns in 12b ADC val
-                    // rms_voltage = get_avg_arr(rms_vals, RMS_SIZE);
-                    // rms_voltage = ADC_to_mv(rms_voltage); 
-                    // voltage = rms_voltage;
-                    voltage = 1200;
-//                    LED3_OFF();
-                    state = PRINT_ST;
-                }
                 ADC_clear_flag();
+                if (!working) continue;
+                voltage = (get_ADC_val() >> 3) & 0xfff;
+                rms_adc_vals[rms_ind] = ADC_to_mv(voltage);
+                rms_ind++;
+                if (rms_ind == RMS_SIZE) {
+                    rms_ind = 0;
+                    // voltage = get_rms(rms_adc_vals, RMS_SIZE, freq); // returns in 12b ADC val
+                    get_voltage_stats(&stats, rms_adc_vals, RMS_SIZE, freq);
+                    voltage = stats.true_rms_mv;
+                    LED3_OFF();
+                    working = 0;
+                    state = PRINT_ST;
+                    ADC_ABORT_1();
+                }
             }
 
             break;
         case PRINT_ST:
             print_stats(AC, voltage, freq);
             state = IDLE_ST;
-            LED1_OFF();
             break;
         } 
     }
@@ -214,7 +236,6 @@ int main(void) {
 void TIM2_IRQHandler() {
     if (TIM2->SR & TIM_SR_CC1IF) { // print interval
         LED1_ON();
-        LED2_ON();
         if (AC) {
             state = FFT_ST;
         }
@@ -222,26 +243,33 @@ void TIM2_IRQHandler() {
             state = DC_ST;
         } 
 
+        working = 1;
         TIM2->CCR1 += PRINT_CCR;
         TIM2->SR &= ~TIM_SR_CC1IF;
         LED1_OFF();
     }
-    else if (TIM2->SR & TIM_SR_CC2IF) { // get adc samples for fft
-        if (state == FFT_ST) {
-            ADC_start_conversion();
-        }
+    if (TIM2->SR & TIM_SR_CC2IF) { // get adc samples for fft
+//         if (state == FFT_ST) {
+// //            LED4_ON();
+//             ADC_start_conversion();
+// //            LED4_OFF();
+//         }
+
+        ADC_start_conversion();
 
         TIM2->CCR2 += FFT_CCR;
         TIM2->SR &= ~TIM_SR_CC2IF;
     }
-    else if (TIM2->SR & TIM_SR_CC3IF) { // get adc samples for rms
-        if (state == VRMS_ST) {
-            ADC_start_conversion();
-        }
-
-        TIM2->CCR3 += RMS_CCR;
-        TIM2->SR &= ~TIM_SR_CC3IF;
-     }
+    // if (TIM2->SR & TIM_SR_CC3IF) { // get adc samples for rms
+        // if (state == VRMS_ST) {
+           LED4_ON();
+            // ADC_start_conversion();
+           LED4_OFF();
+        // }
+// 
+        // TIM2->CCR3 += RMS_CCR;
+        // TIM2->SR &= ~TIM_SR_CC3IF;
+    //  }
 
 
     return;
@@ -257,8 +285,8 @@ void timer_init() {
     TIM2->CCR2 = FFT_CCR - 1;
     TIM2->CCR3 = RMS_CCR - 1;
     TIM2->PSC = 0;
-    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE;
-    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E;
+    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE /*| TIM_DIER_CC3IE*/;
+    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E /*| TIM_CCER_CC3E*/;
 
     DBGMCU->APB1FZR1 |= 1;
 
@@ -269,17 +297,6 @@ void timer_init() {
     return;
 }
 
-
-//void rms_timer_add(uint32_t freq) {
-//
-//    TIM2->DIER |= TIM_DIER_CC3IE;
-//    TIM2->CCER |= TIM_CCER_CC3E;
-//    freq = freq * RMS_SIZE;
-//    rms_ccr = CPU_FREQ / freq;
-//    TIM2->CCR3 = rms_ccr + TIM2->CNT;
-//
-//    return;
-//}
 
 
 void print_stats(int AC, uint16_t voltage, uint16_t freq) {
@@ -349,18 +366,53 @@ uint16_t get_avg_arr(uint16_t *arr, int size) {
     return sum / size;
 }
 
-
-uint16_t get_rms(uint16_t *arr, int size, uint16_t freq) {
-    uint32_t sum = 0; // in mV
-    uint16_t mv;
-    for (int i = 0; i < size; i++) {
-        mv = ADC_to_mv(arr[i]);
-        sum += mv * mv;
+uint16_t get_min_arr(uint16_t *arr, int size) {
+    uint16_t min = (uint16_t)arr[0];
+    uint16_t val;
+    for (int i = 1; i < size; i++) {
+        val = *(((uint16_t*)arr) + i);
+        if (val < min) {
+            min = val;
+        }
     }
-
-    sum = sqrt((double)sum * freq);
-    return sum;
+    return min;
 }
+
+uint16_t get_max_arr(uint16_t *arr, int size) {
+    uint16_t max = (uint16_t)arr[0];
+    uint16_t val;
+    for (int i = 1; i < size; i++) {
+        val = *(((uint16_t*)arr) + i);
+        if (val > max) {
+            max = val;
+        }
+    }
+    return max;
+}
+
+uint16_t get_ac_rms(uint16_t *arr, int size, uint16_t freq) {
+    uint32_t sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += arr[i] * arr[i];
+    }
+    return sqrt(sum / size);
+}
+
+
+void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint16_t freq) {
+    uint16_t v_max = get_max_arr(arr, size);
+    uint16_t v_min = get_min_arr(arr, size);
+    uint32_t vpp = v_max - v_min;
+    uint32_t dc = vpp / 2 + v_min;
+    uint16_t v_rms = get_ac_rms(arr, size, freq);
+
+    stats->dc_mv = dc;
+    stats->vpp_mv = vpp;
+    stats->ac_mv = v_rms;
+    stats->true_rms_mv = sqrt(v_rms * v_rms + dc * dc);
+    return;
+}
+
 
 // if (uart_check_flag()) { 
 //             switch (get_uart_char()) {

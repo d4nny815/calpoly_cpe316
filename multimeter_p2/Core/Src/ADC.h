@@ -17,6 +17,7 @@
 #define UV_TO_MV 1000
 
 #define ADC_start_conversion() (ADC1->CR |= ADC_CR_ADSTART)
+#define ADC_ABORT_1() (ADC1->CR |= ADC_CR_ADSTP)
 // #define ADC_to_mv(val) (uint16_t)(val * VREF * MAGIC_CAL_NUM / ADC_REF)
 
 
