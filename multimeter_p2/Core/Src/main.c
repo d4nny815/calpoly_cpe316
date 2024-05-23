@@ -40,7 +40,7 @@ void mv_to_str(char* buffer, uint16_t volt);
 
 
 // DC MODE STUFF
-#define DC_VOLT_SIZE (1024)
+#define DC_VOLT_SIZE (2048)
 uint16_t get_avg_arr(uint16_t *arr, int size);
 uint16_t get_min_arr(uint16_t *arr, int size);
 uint16_t get_max_arr(uint16_t *arr, int size);
@@ -85,7 +85,7 @@ typedef enum {
     PRINT_ST
 } State_t;
 volatile State_t state = IDLE_ST;
-int AC = 1;
+int AC = 0;
 
 
 void SystemClock_Config(void);
@@ -122,7 +122,7 @@ int main(void) {
 
     // * real work
     uint16_t voltage;
-    uint16_t freq;
+    uint16_t freq = 0;
 
     uint16_t dc_adc_vals[DC_VOLT_SIZE];
     size_t dc_ind = 0;
@@ -141,23 +141,6 @@ int main(void) {
 
 
     while (1) {
-
-//        if (uart_check_flag()) {
-//            uart_clear_flag();
-//            switch (get_uart_char()) {
-//            case 'd':
-//                state = DC_ST;
-//                AC = 0;
-//                break;
-//            case 'a':
-//                state = FFT_ST;
-//                AC = 1;
-//                break;
-//            default: break;
-//            }
-//         }
-
-
         switch (state) {
         case IDLE_ST:
 
@@ -165,7 +148,7 @@ int main(void) {
         case DC_ST:
             if (ADC_check_flag()) {
                 ADC_clear_flag();
-                dc_adc_vals[dc_ind] = (get_ADC_val() >> 3) & 0xfff;
+                dc_adc_vals[dc_ind] = get_ADC_val();
                 dc_ind++;
                 
                 if (dc_ind == DC_VOLT_SIZE) { // done getting measurements
@@ -186,7 +169,7 @@ int main(void) {
             if (ADC_check_flag()) {
                 ADC_clear_flag();
 
-                ac_adc_vals[ac_ind] = get_ADC_val();
+                ac_adc_vals[ac_ind] = get_ADC_val() << 3;
                 ac_ind++;
                 if (ac_ind == FFT_SIZE) {
                     ac_ind = 0;
@@ -207,7 +190,7 @@ int main(void) {
             LED3_ON();
             if (ADC_check_flag()) {
                 ADC_clear_flag();
-                voltage = (get_ADC_val() >> 3) & 0xfff;
+                voltage = get_ADC_val();
                 rms_adc_vals[rms_ind] = ADC_to_mv(voltage);
                 rms_ind++;
                 if (rms_ind == RMS_SIZE) {
@@ -313,6 +296,7 @@ void print_stats(int AC, uint16_t voltage, uint16_t freq) {
     }
 
     MOVE_CURSOR(FREQ_CURSOR);
+    if (!AC) freq = 0;
     snprintf(freq_buffer, 15, "%hu Hz   ", freq);
     uart_send_string(freq_buffer);
 
