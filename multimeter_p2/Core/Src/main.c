@@ -31,13 +31,12 @@
 #define SCALE_CURSOR "[5;0H"
 #define FREQ_CURSOR "[9;12H"
 #define MOVE_CURSOR(x) uart_send_escape(x)
-#define PRINT_PERIOD_SEC (2.0f)
+#define PRINT_PERIOD_SEC (2.1f)
 #define PRINT_RATE ((double)(1 / PRINT_PERIOD_SEC))
 #define PRINT_CCR ((uint32_t)(CPU_FREQ/PRINT_RATE))
 void print_stats(int AC, uint16_t voltage, uint16_t freq);
 void print_start_screen();
 void mv_to_str(char* buffer, uint16_t volt);
-
 
 
 // DC MODE STUFF
@@ -62,7 +61,6 @@ struct VoltStats_t {
     uint16_t true_rms_mv;
 };
 #define RMS_SIZE (FFT_SIZE)
-//#define RMS_SAMPLE_TIME_SEC (1.0f)
 #define RMS_SAMPLE_RATE ((uint32_t)RMS_SIZE)
 #define RMS_CCR ((uint32_t)(CPU_FREQ/RMS_SAMPLE_RATE))
 void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint16_t freq);
@@ -78,10 +76,6 @@ void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint1
 
 
 void timer_init();
-void rms_timer_add(uint32_t freq);
-
-
-
 
 typedef enum {
     IDLE_ST,
@@ -92,10 +86,7 @@ typedef enum {
 } State_t;
 volatile State_t state = IDLE_ST;
 int AC = 1;
-volatile int working = 0;
 
-
-// volatile uint32_t rms_ccr;
 
 void SystemClock_Config(void);
 
@@ -150,6 +141,23 @@ int main(void) {
 
 
     while (1) {
+
+//        if (uart_check_flag()) {
+//            uart_clear_flag();
+//            switch (get_uart_char()) {
+//            case 'd':
+//                state = DC_ST;
+//                AC = 0;
+//                break;
+//            case 'a':
+//                state = FFT_ST;
+//                AC = 1;
+//                break;
+//            default: break;
+//            }
+//         }
+
+
         switch (state) {
         case IDLE_ST:
 
@@ -165,8 +173,6 @@ int main(void) {
                     voltage = get_avg_arr(dc_adc_vals, DC_VOLT_SIZE);
                     voltage = ADC_to_mv(voltage);
 
-
-//                    ADC_clear_flag();
                     state = PRINT_ST;
                     break;
                 }
@@ -179,7 +185,6 @@ int main(void) {
             LED2_ON();
             if (ADC_check_flag()) {
                 ADC_clear_flag();
-                if (!working) continue;
 
                 ac_adc_vals[ac_ind] = get_ADC_val();
                 ac_ind++;
@@ -193,8 +198,6 @@ int main(void) {
 
                     LED2_OFF();
                     state = VRMS_ST;
-//                    state = PRINT_ST;
-//                    working = 0;
                     ADC_ABORT_1();
                 }
             }
@@ -204,7 +207,6 @@ int main(void) {
             LED3_ON();
             if (ADC_check_flag()) {
                 ADC_clear_flag();
-                if (!working) continue;
                 voltage = (get_ADC_val() >> 3) & 0xfff;
                 rms_adc_vals[rms_ind] = ADC_to_mv(voltage);
                 rms_ind++;
@@ -214,7 +216,6 @@ int main(void) {
                     get_voltage_stats(&stats, rms_adc_vals, RMS_SIZE, freq);
                     voltage = stats.true_rms_mv;
                     LED3_OFF();
-                    working = 0;
                     state = PRINT_ST;
                     ADC_ABORT_1();
                 }
@@ -236,41 +237,33 @@ int main(void) {
 void TIM2_IRQHandler() {
     if (TIM2->SR & TIM_SR_CC1IF) { // print interval
         LED1_ON();
-        if (AC) {
-            state = FFT_ST;
-        }
-        else {
-            state = DC_ST;
-        } 
 
-        working = 1;
+        if (uart_check_flag()) {
+            uart_clear_flag();
+            switch (get_uart_char()) {
+            case 'd':
+                AC = 0;
+                    break;
+            case 'a':
+                AC = 1;
+                break;
+            default: break;
+            }
+        }
+
+        if (AC) { state = FFT_ST; }
+        else { state = DC_ST; }
+
         TIM2->CCR1 += PRINT_CCR;
         TIM2->SR &= ~TIM_SR_CC1IF;
         LED1_OFF();
     }
     if (TIM2->SR & TIM_SR_CC2IF) { // get adc samples for fft
-//         if (state == FFT_ST) {
-// //            LED4_ON();
-//             ADC_start_conversion();
-// //            LED4_OFF();
-//         }
-
         ADC_start_conversion();
 
         TIM2->CCR2 += FFT_CCR;
         TIM2->SR &= ~TIM_SR_CC2IF;
     }
-    // if (TIM2->SR & TIM_SR_CC3IF) { // get adc samples for rms
-        // if (state == VRMS_ST) {
-           LED4_ON();
-            // ADC_start_conversion();
-           LED4_OFF();
-        // }
-// 
-        // TIM2->CCR3 += RMS_CCR;
-        // TIM2->SR &= ~TIM_SR_CC3IF;
-    //  }
-
 
     return;
 }
@@ -283,10 +276,9 @@ void timer_init() {
     TIM2->ARR = -1;
     TIM2->CCR1 = PRINT_CCR - 1;
     TIM2->CCR2 = FFT_CCR - 1;
-    TIM2->CCR3 = RMS_CCR - 1;
     TIM2->PSC = 0;
-    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE /*| TIM_DIER_CC3IE*/;
-    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E /*| TIM_CCER_CC3E*/;
+    TIM2->DIER = TIM_DIER_CC1IE | TIM_DIER_CC2IE ;
+    TIM2->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E ;
 
     DBGMCU->APB1FZR1 |= 1;
 
@@ -414,24 +406,6 @@ void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint1
 }
 
 
-// if (uart_check_flag()) { 
-//             switch (get_uart_char()) {
-//             case 'd':
-//                 // print_stats(0, 263, 3133);
-//                 // ADC_start_conversion();
-//                 working = 1;
-//                 state = DC_ST;
-//                 break;
-//             case 'a':
-//                 // print_stats(1, 1720, 127);
-//                 working = 1;
-//                 state = AC_ST;
-//                 break;
-//             default: break;
-//             }
-            
-//             uart_clear_flag();
-//         } 
 
 
 /**
