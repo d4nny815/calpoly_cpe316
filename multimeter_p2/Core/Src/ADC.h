@@ -12,8 +12,10 @@
 
 #define VREF 3300
 #define ADC_REF (1 << 12) - 1
-#define MAGIC_CAL_X 812
-#define MAGIC_CAL_Y 46000
+#define MAGIC_CAL_X 784
+//#define MAGIC_CAL_X 880
+#define MAGIC_CAL_Y 16361
+//#define MAGIC_CAL_Y 14000
 #define UV_TO_MV 1000
 
 #define ADC_start_conversion() (ADC1->CR |= ADC_CR_ADSTART)

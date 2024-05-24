@@ -3641,50 +3641,50 @@ LOAD /opt/st/stm32cubeide_1.15.0/plugins/com.st.stm32cube.ide.mcu.externaltools.
  .debug_line    0x00007764       0x98 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_bitreversal2.o)
  .debug_line    0x000077fc      0x764 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cfft_radix4_q15.o)
 
-.debug_str      0x00000000    0xe4128
- .debug_str     0x00000000    0xdc97a ./Core/Src/ADC.o
-                              0xdcd0a (size before relaxing)
- .debug_str     0x000dc97a     0x505e ./Core/Src/main.o
-                              0xe17ec (size before relaxing)
- .debug_str     0x000e19d8       0x33 ./Core/Src/stm32l4xx_hal_msp.o
-                              0xdc62b (size before relaxing)
- .debug_str     0x000e1a0b       0xc9 ./Core/Src/stm32l4xx_it.o
-                              0xdc564 (size before relaxing)
- .debug_str     0x000e1ad4      0x4dc ./Core/Src/sysmem.o
+.debug_str      0x00000000    0xe412a
+ .debug_str     0x00000000    0xdc97c ./Core/Src/ADC.o
+                              0xdcd0c (size before relaxing)
+ .debug_str     0x000dc97c     0x505e ./Core/Src/main.o
+                              0xe17ee (size before relaxing)
+ .debug_str     0x000e19da       0x33 ./Core/Src/stm32l4xx_hal_msp.o
+                              0xdc62d (size before relaxing)
+ .debug_str     0x000e1a0d       0xc9 ./Core/Src/stm32l4xx_it.o
+                              0xdc566 (size before relaxing)
+ .debug_str     0x000e1ad6      0x4dc ./Core/Src/sysmem.o
                                0x60c8 (size before relaxing)
- .debug_str     0x000e1fb0       0xf2 ./Core/Src/system_stm32l4xx.o
+ .debug_str     0x000e1fb2       0xf2 ./Core/Src/system_stm32l4xx.o
                               0xdc6d6 (size before relaxing)
- .debug_str     0x000e20a2       0x14 ./Core/Src/timer.o
-                              0xdcbd9 (size before relaxing)
- .debug_str     0x000e20b6       0x59 ./Core/Src/uart.o
-                              0xdcc99 (size before relaxing)
- .debug_str     0x000e210f       0x44 ./Core/Startup/startup_stm32l476rgtx.o
+ .debug_str     0x000e20a4       0x14 ./Core/Src/timer.o
+                              0xdcbdb (size before relaxing)
+ .debug_str     0x000e20b8       0x59 ./Core/Src/uart.o
+                              0xdcc9b (size before relaxing)
+ .debug_str     0x000e2111       0x44 ./Core/Startup/startup_stm32l476rgtx.o
                                  0x7b (size before relaxing)
- .debug_str     0x000e2153      0x659 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
+ .debug_str     0x000e2155      0x659 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal.o
                               0xdd269 (size before relaxing)
- .debug_str     0x000e27ac      0x31e ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.o
+ .debug_str     0x000e27ae      0x31e ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_cortex.o
                               0xdcf1d (size before relaxing)
- .debug_str     0x000e2aca      0x52a ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.o
+ .debug_str     0x000e2acc      0x52a ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_pwr_ex.o
                               0xdcc31 (size before relaxing)
- .debug_str     0x000e2ff4      0x3f0 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.o
+ .debug_str     0x000e2ff6      0x3f0 ./Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_rcc.o
                               0xdcd1c (size before relaxing)
- .debug_str     0x000e33e4      0x183 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_max_q15.o)
+ .debug_str     0x000e33e6      0x183 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_max_q15.o)
                                 0x25d (size before relaxing)
- .debug_str     0x000e3567       0xfd /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_rfft_q15.o)
+ .debug_str     0x000e3569       0xfd /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_rfft_q15.o)
                                 0x3de (size before relaxing)
- .debug_str     0x000e3664      0x122 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_rfft_init_q15.o)
+ .debug_str     0x000e3666      0x122 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_rfft_init_q15.o)
                                 0x491 (size before relaxing)
- .debug_str     0x000e3786       0x60 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cmplx_mag_q15.o)
+ .debug_str     0x000e3788       0x60 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cmplx_mag_q15.o)
                                 0x323 (size before relaxing)
- .debug_str     0x000e37e6       0x84 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_sqrt_q15.o)
+ .debug_str     0x000e37e8       0x84 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_sqrt_q15.o)
                                 0x316 (size before relaxing)
- .debug_str     0x000e386a      0x5c3 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_const_structs.o)
+ .debug_str     0x000e386c      0x5c3 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_const_structs.o)
                                 0x8dc (size before relaxing)
- .debug_str     0x000e3e2d      0x125 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_common_tables.o)
+ .debug_str     0x000e3e2f      0x125 /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_common_tables.o)
                                 0x704 (size before relaxing)
- .debug_str     0x000e3f52       0xda /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cfft_q15.o)
+ .debug_str     0x000e3f54       0xda /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cfft_q15.o)
                                 0x38a (size before relaxing)
- .debug_str     0x000e402c       0xfc /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cfft_radix4_q15.o)
+ .debug_str     0x000e402e       0xfc /home/danny/STM32Cube/Repository/STM32Cube_FW_L4_V1.18.0/Drivers/CMSIS/GCC/libarm_cortexM4lf_math.a(arm_cfft_radix4_q15.o)
                                 0x3dc (size before relaxing)
 
 .comment        0x00000000       0xb3

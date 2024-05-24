@@ -30,11 +30,12 @@
 #define VOLT_CURSOR "[3;7H"
 #define SCALE_CURSOR "[5;0H"
 #define FREQ_CURSOR "[9;12H"
+#define VPP_CURSOR "[11;7H"
 #define MOVE_CURSOR(x) uart_send_escape(x)
 #define PRINT_PERIOD_SEC (2.1f)
 #define PRINT_RATE ((double)(1 / PRINT_PERIOD_SEC))
 #define PRINT_CCR ((uint32_t)(CPU_FREQ/PRINT_RATE))
-void print_stats(int AC, uint16_t voltage, uint16_t freq);
+void print_stats(int AC, uint16_t voltage, uint16_t freq, uint16_t voltage_vpp);
 void print_start_screen();
 void mv_to_str(char* buffer, uint16_t volt);
 
@@ -63,6 +64,7 @@ struct VoltStats_t {
 #define RMS_SIZE (FFT_SIZE)
 #define RMS_SAMPLE_RATE ((uint32_t)RMS_SIZE)
 #define RMS_CCR ((uint32_t)(CPU_FREQ/RMS_SAMPLE_RATE))
+#define MV_TO_V_FLOAT(x) ((double)x/1000)
 void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint16_t freq);
 
 #define LED1_ON() (GPIOC->BSRR = GPIO_BSRR_BS0)
@@ -85,7 +87,7 @@ typedef enum {
     PRINT_ST
 } State_t;
 volatile State_t state = IDLE_ST;
-int AC = 0;
+int AC = 1;
 
 
 void SystemClock_Config(void);
@@ -195,7 +197,6 @@ int main(void) {
                 rms_ind++;
                 if (rms_ind == RMS_SIZE) {
                     rms_ind = 0;
-                    // voltage = get_rms(rms_adc_vals, RMS_SIZE, freq); // returns in 12b ADC val
                     get_voltage_stats(&stats, rms_adc_vals, RMS_SIZE, freq);
                     voltage = stats.true_rms_mv;
                     LED3_OFF();
@@ -206,7 +207,7 @@ int main(void) {
 
             break;
         case PRINT_ST:
-            print_stats(AC, voltage, freq);
+            print_stats(AC, voltage, freq, stats.vpp_mv);
             state = IDLE_ST;
             break;
         } 
@@ -274,7 +275,7 @@ void timer_init() {
 
 
 
-void print_stats(int AC, uint16_t voltage, uint16_t freq) {
+void print_stats(int AC, uint16_t voltage, uint16_t freq, uint16_t voltage_vpp) {
     static char voltage_buffer[5] = "0.00";
     static char freq_buffer[15] = "1000 Hz    ";
     
@@ -300,6 +301,10 @@ void print_stats(int AC, uint16_t voltage, uint16_t freq) {
     snprintf(freq_buffer, 15, "%hu Hz   ", freq);
     uart_send_string(freq_buffer);
 
+    MOVE_CURSOR(VPP_CURSOR);
+    mv_to_str(voltage_buffer, voltage_vpp);
+    uart_send_string(voltage_buffer);
+
     return;
 }
 
@@ -320,6 +325,9 @@ void print_start_screen() {
 
     uart_send_escape("[9;0H");
     uart_send_string("Frequency:");
+
+    uart_send_escape("[11;0H");
+    uart_send_string("Vpp:      V");
     return;
 }
 
@@ -366,26 +374,34 @@ uint16_t get_max_arr(uint16_t *arr, int size) {
     return max;
 }
 
-uint16_t get_ac_rms(uint16_t *arr, int size, uint16_t freq) {
-    uint32_t sum = 0;
+
+// rms for all types of waveforms
+// arr already in mV
+// arr is collected over 1 second, so might record multiple periods
+uint16_t get_ac_rms(uint16_t *arr, int size) {
+    double sum = 0;
+    double volt;
     for (int i = 0; i < size; i++) {
-        sum += arr[i] * arr[i];
+        volt = MV_TO_V_FLOAT(arr[i]);
+        sum += volt * volt;
     }
-    return sqrt(sum / size);
+    sum /= size;
+    sum = sqrt(sum);
+    return (uint16_t)(sum * 1000);
 }
 
 
 void get_voltage_stats(struct VoltStats_t *stats, uint16_t *arr, int size, uint16_t freq) {
     uint16_t v_max = get_max_arr(arr, size);
     uint16_t v_min = get_min_arr(arr, size);
-    uint32_t vpp = v_max - v_min;
-    uint32_t dc = vpp / 2 + v_min;
-    uint16_t v_rms = get_ac_rms(arr, size, freq);
-
-    stats->dc_mv = dc;
-    stats->vpp_mv = vpp;
-    stats->ac_mv = v_rms;
-    stats->true_rms_mv = sqrt(v_rms * v_rms + dc * dc);
+    stats->vpp_mv = v_max - v_min;
+    stats->dc_mv = stats->vpp_mv / 2 + v_min;
+    stats->true_rms_mv = get_ac_rms(arr, size);
+//    double ac_v = MV_TO_V_FLOAT(stats->ac_mv);
+//    double dc_v = MV_TO_V_FLOAT(stats->dc_mv);
+//    double rms_v = sqrt(ac_v * ac_v + dc_v * dc_v);
+//
+//    stats->true_rms_mv = (uint16_t)(rms_v * 1000);
     return;
 }
 
