@@ -69,6 +69,8 @@ void mv_to_str(char* buffer, uint16_t volt);
 
 void timer_init();
 
+#define DC_MODE 'd'
+#define AC_MODE 'a'
 typedef enum {
     IDLE_ST,
     DC_ST,
@@ -173,7 +175,6 @@ int main(void) {
                 if (rms_ind == RMS_SIZE) {
                     rms_ind = 0;
                     get_voltage_stats(&stats, rms_adc_vals, RMS_SIZE, freq);
-                    voltage = stats.voltage;
                     state = PRINT_ST;
                     ADC_ABORT_1();
                 }
