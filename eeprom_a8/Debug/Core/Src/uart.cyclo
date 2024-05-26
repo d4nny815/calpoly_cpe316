@@ -1,0 +1,12 @@
+../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	2
+../Core/Src/uart.c:14:6:uart_pin_init	1
+../Core/Src/uart.c:29:6:uart_init	1
+../Core/Src/uart.c:47:6:uart_send_char	2
+../Core/Src/uart.c:54:6:uart_send_string	2
+../Core/Src/uart.c:63:6:uart_println	1
+../Core/Src/uart.c:70:6:uart_send_escape	1
+../Core/Src/uart.c:78:6:uart_clear_screen	1
+../Core/Src/uart.c:85:6:USART2_IRQHandler	1
+../Core/Src/uart.c:91:5:uart_check_flag	1
+../Core/Src/uart.c:95:6:uart_clear_flag	1
+../Core/Src/uart.c:101:6:get_uart_char	1
