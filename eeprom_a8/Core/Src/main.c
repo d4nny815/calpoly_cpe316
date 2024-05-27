@@ -20,6 +20,7 @@
 #include "main.h"
 #include "i2c.h"
 #include "uart.h"
+#include "bytes.h"
 #include <stdio.h>
 
 #define STRING_SIZE 50
@@ -30,28 +31,56 @@ int main(void) {
     HAL_Init();
     SystemClock_Config();
 
+    // init
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+    GPIOA->MODER &= ~GPIO_MODER_MODE5;
+    GPIOA->MODER |= GPIO_MODER_MODE5_0;
+    GPIOA->PUPDR &= GPIO_PUPDR_PUPD5;
+    GPIOA->OTYPER &= ~GPIO_OTYPER_OT5;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED5;
+
+
     uart_init();
     eeprom_init();
 
     uart_println("Starting");
     
-    char send_array[STRING_SIZE];
-    char rec_array[STRING_SIZE];
-    
-    uint16_t addr = 0x69;
-
+    // char send_array[STRING_SIZE];
+    // char rec_array[STRING_SIZE];
+    // 
+    // uint16_t addr = 0x69;
+// 
     uint8_t send_data = 31;
-    snprintf(send_array, STRING_SIZE, "Sending %hu to 0x%hx", send_data, addr);
-    eeprom_store_byte(send_data, addr);
-    uart_println(send_array);
+    // snprintf(send_array, STRING_SIZE, "Sending %hu to 0x%hx", send_data, addr);
+    // eeprom_store_byte(send_data, addr);
+    // uart_println(send_array);
 
 
     uint8_t rec_data = 0xff;
-    rec_data = eeprom_load_byte(addr);
-    snprintf(rec_array, STRING_SIZE, "Recieving %hu from 0x%hx", rec_data, addr);
-    uart_println(rec_array);
+    // rec_data = eeprom_load_byte(addr);
+    // snprintf(rec_array, STRING_SIZE, "Recieving %hu from 0x%hx", rec_data, addr);
+    // uart_println(rec_array);
+
+    int running = 1;
 
     while (1) {
+        for (size_t i=0; i<ARR_SIZE; i++) {
+            send_data = SEND_BYTES[i];
+            eeprom_store_byte(send_data, ADDRS[i]);
+            rec_data = eeprom_load_byte(ADDRS[i]);
+
+            if (send_data == rec_data) {
+                GPIOA->BSRR = GPIO_BSRR_BS5;
+            } else {
+                running = 0;
+                break;
+            }
+        }
+
+        if (!running) {
+            GPIOA->BRR = GPIO_BRR_BR5;
+            while (1);
+        }
 
 
     }

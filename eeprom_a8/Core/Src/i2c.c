@@ -60,12 +60,13 @@ void eeprom_init() {
 
 
 void eeprom_store_byte(uint8_t data, uint16_t addr) {
-    for (uint32_t i=0; i<(uint32_t)250e3; i++); // ? do i need delay before and after?
 
     // start -> control -> upper addr -> lower addr -> data -> stop
-    
+    // clear stop flag
+
     // configure i2c sending register
     while (I2C1->ISR & I2C_ISR_BUSY);
+    I2C1->ICR |= I2C_ICR_STOPCF;
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
                 (0 << I2C_CR2_RD_WRN_Pos) | 
@@ -96,7 +97,7 @@ void eeprom_store_byte(uint8_t data, uint16_t addr) {
     I2C1->ICR |= I2C_ICR_STOPCF;
 
 
-    for (uint32_t i=0; i<(uint32_t)250e3; i++);
+    for (uint32_t i=0; i<(uint32_t)10e6; i++);
 
 
     return;
@@ -105,11 +106,9 @@ void eeprom_store_byte(uint8_t data, uint16_t addr) {
 uint8_t eeprom_load_byte(uint16_t addr) {
     uint8_t data;
 
-    // start -> control -> upper addr -> lower addr -> start -> control -> read -> stop
+    while (I2C1->ISR & I2C_ISR_BUSY); // Wait until I2C is not busy
 
-    // configure i2c sending register
-    while (I2C1->ISR & I2C_ISR_BUSY);
-
+    // Send the address (write mode)
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
                 (0 << I2C_CR2_RD_WRN_Pos) | 
@@ -117,17 +116,18 @@ uint8_t eeprom_load_byte(uint16_t addr) {
                 (0 << I2C_CR2_AUTOEND_Pos) | 
                 (BYTES_PER_ADDR << I2C_CR2_NBYTES_Pos);
 
-
-    // send addr upper byte
+    // Send address high byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
-    I2C1->TXDR = (addr >> 8) & 0xFF; // send addr upper byte
+    I2C1->TXDR = (addr >> 8) & 0xFF;
 
-    // send addr lower byte
+    // Send address low byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
-    I2C1->TXDR = addr & 0xFF; // send addr lower byte
+    I2C1->TXDR = addr & 0xFF;
 
-    // reconfigure i2c sending register
-//    while (I2C1->ISR & I2C_ISR_BUSY);
+    // Wait for transfer complete
+    while (!(I2C1->ISR & I2C_ISR_TC));
+
+    // Send repeated start condition for read
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
                 (1 << I2C_CR2_RD_WRN_Pos) | 
@@ -135,14 +135,58 @@ uint8_t eeprom_load_byte(uint16_t addr) {
                 (0 << I2C_CR2_AUTOEND_Pos) | 
                 (BYTES_PER_LOAD << I2C_CR2_NBYTES_Pos);
 
+    // Wait until RXNE flag is set (data received)
     while (!(I2C1->ISR & I2C_ISR_RXNE));
     data = I2C1->RXDR;
 
-    
-
+    // Send NACK and stop condition
+    I2C1->CR2 |= I2C_CR2_NACK | I2C_CR2_STOP;
 
     return data;
 }
+
+// uint8_t eeprom_load_byte(uint16_t addr) {
+//     uint8_t data;
+
+//     // start -> control -> upper addr -> lower addr -> start -> control -> read -> no ack -> stop
+
+//     // configure i2c sending register
+//     while (I2C1->ISR & I2C_ISR_BUSY);
+
+//     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
+//                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
+//                 (0 << I2C_CR2_RD_WRN_Pos) | 
+//                 (1 << I2C_CR2_START_Pos) | 
+//                 (0 << I2C_CR2_AUTOEND_Pos) | 
+//                 (BYTES_PER_ADDR << I2C_CR2_NBYTES_Pos);
+
+
+//     // send addr upper byte
+//     while (!(I2C1->ISR & I2C_ISR_TXE));
+//     I2C1->TXDR = (addr >> 8) & 0xFF; // send addr upper byte
+
+//     // send addr lower byte
+//     while (!(I2C1->ISR & I2C_ISR_TXE));
+//     I2C1->TXDR = addr & 0xFF; // send addr lower byte
+
+//     // reconfigure i2c sending register
+// //    while (I2C1->ISR & I2C_ISR_BUSY);
+//     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
+//                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
+//                 (1 << I2C_CR2_RD_WRN_Pos) | 
+//                 (1 << I2C_CR2_START_Pos) | 
+//                 (0 << I2C_CR2_AUTOEND_Pos) | 
+//                 (BYTES_PER_LOAD << I2C_CR2_NBYTES_Pos);
+
+//     while (!(I2C1->ISR & I2C_ISR_RXNE));
+//     data = I2C1->RXDR;
+//     I2C1->CR2 |= I2C_CR2_NACK | I2C_CR2_STOP;
+
+//     I2C1->ISR |= I2C_ISR_STOPF;
+
+
+//     return data;
+// }
 
 
 
