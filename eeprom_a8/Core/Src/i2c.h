@@ -24,4 +24,3 @@ void eeprom_store_byte(uint8_t data, uint16_t addr);
 
 
 #endif /* SRC_I2C_H_ */
-#

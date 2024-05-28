@@ -60,8 +60,8 @@ all: main-build
 main-build: eeprom_a8.elf secondary-outputs
 
 # Tool invocations
-eeprom_a8.elf eeprom_a8.map: $(OBJS) $(USER_OBJS) /home/danny/Documents/school/cpe316/eeprom_a8/STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "eeprom_a8.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/danny/Documents/school/cpe316/eeprom_a8/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="eeprom_a8.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+eeprom_a8.elf eeprom_a8.map: $(OBJS) $(USER_OBJS) C:\Users\D4nny\Documents\school\calpoly_cpe316\eeprom_a8\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "eeprom_a8.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\D4nny\Documents\school\calpoly_cpe316\eeprom_a8\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="eeprom_a8.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

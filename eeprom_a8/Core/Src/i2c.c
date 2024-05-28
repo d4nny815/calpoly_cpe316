@@ -37,15 +37,6 @@ void eeprom_init() {
     I2C1->CR1 &= ~I2C_CR1_ANFOFF;
     I2C1->CR1 &= ~I2C_CR1_DNF;
 
-    // configure PRESEC SDASEL SCLDEL SCLH SCLL I2C_TIMINGR
-    // from manual for 48MHz sysclk and 400kHz I2C freq
-//     I2C1->TIMINGR = (0x5 << I2C_TIMINGR_PRESC_Pos) |
-//                     (0x9 << I2C_TIMINGR_SCLL_Pos) |
-//                     (0x3 << I2C_TIMINGR_SCLH_Pos) |
-//                     (0x3 << I2C_TIMINGR_SDADEL_Pos) |
-//                     (0x3 << I2C_TIMINGR_SCLDEL_Pos);
-
-    // ? which one do I use?
     I2C1->TIMINGR = 0x2010091A; // taken from ioc
 
     // configure NOSTRETCH
@@ -60,31 +51,25 @@ void eeprom_init() {
 
 
 void eeprom_store_byte(uint8_t data, uint16_t addr) {
-
     // start -> control -> upper addr -> lower addr -> data -> stop
-    // clear stop flag
 
     // configure i2c sending register
     while (I2C1->ISR & I2C_ISR_BUSY);
-    I2C1->ICR |= I2C_ICR_STOPCF;
+    I2C1->ICR |= I2C_ICR_STOPCF; // clear stop flag ? do i need this here?
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
-                (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
+                (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) | // 7 bit addr in SADD[7:1]
                 (0 << I2C_CR2_RD_WRN_Pos) | 
                 (1 << I2C_CR2_START_Pos) | 
                 (0 << I2C_CR2_AUTOEND_Pos) | 
                 (BYTES_PER_STORE << I2C_CR2_NBYTES_Pos);
 
-
-
     // send addr upper byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
     I2C1->TXDR = (addr >> 8) & 0xFF; // send addr upper byte
 
-
     // send addr lower byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
     I2C1->TXDR = addr & 0xFF; // send addr lower byte
-
 
     // send data byte 
     while (!(I2C1->ISR & I2C_ISR_TXE));
@@ -96,8 +81,7 @@ void eeprom_store_byte(uint8_t data, uint16_t addr) {
     while (I2C1->ISR & I2C_ISR_STOPF);
     I2C1->ICR |= I2C_ICR_STOPCF;
 
-
-    for (uint32_t i=0; i<(uint32_t)10e6; i++);
+    for (uint32_t i=0; i<(uint32_t)250e3; i++); // 5ms delay for write to process
 
 
     return;
@@ -106,9 +90,8 @@ void eeprom_store_byte(uint8_t data, uint16_t addr) {
 uint8_t eeprom_load_byte(uint16_t addr) {
     uint8_t data;
 
-    while (I2C1->ISR & I2C_ISR_BUSY); // Wait until I2C is not busy
-
-    // Send the address (write mode)
+    // configure i2c sending register
+    while (I2C1->ISR & I2C_ISR_BUSY);
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
                 (0 << I2C_CR2_RD_WRN_Pos) | 
@@ -116,18 +99,18 @@ uint8_t eeprom_load_byte(uint16_t addr) {
                 (0 << I2C_CR2_AUTOEND_Pos) | 
                 (BYTES_PER_ADDR << I2C_CR2_NBYTES_Pos);
 
-    // Send address high byte
+    // send addr upper byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
     I2C1->TXDR = (addr >> 8) & 0xFF;
 
-    // Send address low byte
+    // send addr lower byte
     while (!(I2C1->ISR & I2C_ISR_TXE));
     I2C1->TXDR = addr & 0xFF;
 
-    // Wait for transfer complete
+    // wait
     while (!(I2C1->ISR & I2C_ISR_TC));
 
-    // Send repeated start condition for read
+    // configure i2c reg to read
     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
                 (1 << I2C_CR2_RD_WRN_Pos) | 
@@ -135,58 +118,13 @@ uint8_t eeprom_load_byte(uint16_t addr) {
                 (0 << I2C_CR2_AUTOEND_Pos) | 
                 (BYTES_PER_LOAD << I2C_CR2_NBYTES_Pos);
 
-    // Wait until RXNE flag is set (data received)
     while (!(I2C1->ISR & I2C_ISR_RXNE));
     data = I2C1->RXDR;
 
-    // Send NACK and stop condition
     I2C1->CR2 |= I2C_CR2_NACK | I2C_CR2_STOP;
 
     return data;
 }
-
-// uint8_t eeprom_load_byte(uint16_t addr) {
-//     uint8_t data;
-
-//     // start -> control -> upper addr -> lower addr -> start -> control -> read -> no ack -> stop
-
-//     // configure i2c sending register
-//     while (I2C1->ISR & I2C_ISR_BUSY);
-
-//     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
-//                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
-//                 (0 << I2C_CR2_RD_WRN_Pos) | 
-//                 (1 << I2C_CR2_START_Pos) | 
-//                 (0 << I2C_CR2_AUTOEND_Pos) | 
-//                 (BYTES_PER_ADDR << I2C_CR2_NBYTES_Pos);
-
-
-//     // send addr upper byte
-//     while (!(I2C1->ISR & I2C_ISR_TXE));
-//     I2C1->TXDR = (addr >> 8) & 0xFF; // send addr upper byte
-
-//     // send addr lower byte
-//     while (!(I2C1->ISR & I2C_ISR_TXE));
-//     I2C1->TXDR = addr & 0xFF; // send addr lower byte
-
-//     // reconfigure i2c sending register
-// //    while (I2C1->ISR & I2C_ISR_BUSY);
-//     I2C1->CR2 = (ADDRING_MODE << I2C_CR2_ADD10_Pos) |
-//                 (EEPROM_ADDR << (I2C_CR2_SADD_Pos + 1)) |
-//                 (1 << I2C_CR2_RD_WRN_Pos) | 
-//                 (1 << I2C_CR2_START_Pos) | 
-//                 (0 << I2C_CR2_AUTOEND_Pos) | 
-//                 (BYTES_PER_LOAD << I2C_CR2_NBYTES_Pos);
-
-//     while (!(I2C1->ISR & I2C_ISR_RXNE));
-//     data = I2C1->RXDR;
-//     I2C1->CR2 |= I2C_CR2_NACK | I2C_CR2_STOP;
-
-//     I2C1->ISR |= I2C_ISR_STOPF;
-
-
-//     return data;
-// }
 
 
 

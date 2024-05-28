@@ -30,12 +30,9 @@ void uart_init(void) {
     uart_pin_init();
 
     RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-    // 8-bit data, oversampling by 16, 1 stop bit, no parity bit, rx interrupt enabled
-    USART2->CR1 = (USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE); // might not need rx intr
+    // 8-bit data, oversampling by 16, 1 stop bit, no parity bit
+    USART2->CR1 = (USART_CR1_TE | USART_CR1_RE);
     USART2->BRR = USART_BRR;        // set baud rate
-
-    NVIC_EnableIRQ(USART2_IRQn);
-    __enable_irq();
 
     USART2->CR1 |= USART_CR1_UE;   // enable USART2
 
