@@ -1,0 +1,6 @@
+../Core/Src/TFTDisplay.c:11:6:spi_init	4	static
+../Core/Src/TFTDisplay.c:59:6:display_init	16	static
+../Core/Src/TFTDisplay.c:85:6:send_command	16	static
+../Core/Src/TFTDisplay.c:94:6:send_data	16	static
+../Core/Src/TFTDisplay.c:103:6:spi_write	16	static
+../Core/Src/TFTDisplay.c:110:6:delay_ms	24	static
