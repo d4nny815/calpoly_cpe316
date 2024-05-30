@@ -18,21 +18,28 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-// #include "TFTDisplay.h"
 #include "uart.h"
+#include "Objects.h"
+
+
 
 void SystemClock_Config(void);
-
 
 int main(void) {
     HAL_Init();
     SystemClock_Config();
 
-    // display_init();
     uart_init();
+    Snake_t snake;
+    Snake_t* p_snake = &snake;
+    snake_init(p_snake);
 
     while (1) {
+        snake_move(p_snake);
+        snake_print(p_snake);
 
+        HAL_Delay(1000);
+//         for (int i = 0; i < 1000; i++); // delay for now
     }
 
 

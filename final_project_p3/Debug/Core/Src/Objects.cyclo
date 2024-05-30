@@ -1,0 +1,8 @@
+../Core/Src/Objects.c:10:6:grid_init	3
+../Core/Src/Objects.c:22:6:grid_clear	3
+../Core/Src/Objects.c:32:6:snake_print	2
+../Core/Src/Objects.c:56:6:snake_init	3
+../Core/Src/Objects.c:79:8:snake_move	9
+../Core/Src/Objects.c:137:8:snake_check_collision	5
+../Core/Src/Objects.c:153:6:snake_die	1
+../Core/Src/Objects.c:160:6:snake_change_dir	14
