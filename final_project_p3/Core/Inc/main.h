@@ -29,8 +29,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 #include "stm32l476xx.h"
-#define CPU_FREQ (8000000UL)
-
+#define CPU_FREQ (32000000UL)
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 

@@ -20,8 +20,7 @@
 #include "main.h"
 #include "uart.h"
 #include "Objects.h"
-
-
+#include "RNG.h"
 
 void SystemClock_Config(void);
 
@@ -29,16 +28,22 @@ int main(void) {
     HAL_Init();
     SystemClock_Config();
 
+    rng_init();
     uart_init();
-    Snake_t snake;
-    Snake_t* p_snake = &snake;
-    snake_init(p_snake);
+
+    Snake_t snake = snake_init();
+    Food_t food = food_init();
+
 
     while (1) {
-        snake_move(p_snake);
-        snake_print(p_snake);
+        snake_move(&snake);
+        if (snake_check_food(snake, food)) {
+            snake_grow(&snake);
+        }
+        
+        grid_draw(snake, food);
 
-        HAL_Delay(1000);
+        HAL_Delay(300);
 //         for (int i = 0; i < 1000; i++); // delay for now
     }
 
@@ -85,15 +90,22 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV4;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
 }
+
+/**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+
 
 /* USER CODE BEGIN 4 */
 

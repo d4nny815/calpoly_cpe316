@@ -7,6 +7,14 @@
 
 #include "Objects.h"
 
+uint8_t same_point(Point_t a, Point_t b) {
+    return (a.x == b.x && a.y == b.y);
+}
+
+
+/**
+ * @brief Initialize the grid with black color
+*/
 void grid_init() {
     for (int i = 0; i < VGA_WIDTH; i++) {
         for (int j = 0; j < VGA_HEIGHT; j++) {
@@ -19,6 +27,10 @@ void grid_init() {
     return;
 }
 
+
+/**
+ * @brief Clear the grid with black color
+*/
 void grid_clear() {
     for (int i = 0; i < VGA_WIDTH; i++) {
         for (int j = 0; j < VGA_HEIGHT; j++) {
@@ -29,50 +41,73 @@ void grid_clear() {
     return;
 }
 
-void snake_print(Snake_t* snake) {
-    static char buffer[10000];
+
+// TODO: change to SPI display
+/**
+ * @brief Draw the snake and food on the grid
+ * @param snake: the snake object
+ * @param food: the food object
+*/
+void grid_draw(Snake_t snake, Food_t food) {
     uart_clear_screen();
-    sprintf(buffer, "Snake length: %d", snake->len);
-    uart_println(buffer);
-    sprintf(buffer, "Snake direction: %d", snake->dir);
-    uart_println(buffer);
-    sprintf(buffer, "Snake alive: %d", snake->alive);
-    uart_println(buffer);
-    sprintf(buffer, "Snake score: %d", snake->score);
-    uart_println(buffer);
+    snake_draw(snake);
+    food_draw(food);        
 
-    BodyPart_t* p_body = snake->body;
-    while (p_body->valid) {
-        sprintf(buffer, "Body part: x: %d, y: %d", p_body->pos.x, p_body->pos.y);
-        uart_println(buffer);
-        p_body++;
-    }
-
-    uart_println("End of snake body");
-
-    return;
-}
-
-void snake_init(Snake_t* snake) {
-    snake->len = 3;
-    snake->dir = NORTH;
-    snake->alive = 1;
-    snake->score = 0;
-    
-    for (int i = 0; i < snake->len; i++) {
-        snake->body[i].valid = 1;
-        snake->body[i].pos.x = START_X;
-        snake->body[i].pos.y = START_Y + i;
-    }
-
-    for (int i = snake->len; i < MAX_SNAKE_LEN; i++) {
-        snake->body[i].valid = 0;
-    }
     return;
 }
 
 
 /**
+ * @brief Draw the snake object
+ * @param snake: the snake object
+*/
+void snake_draw(Snake_t snake) {
+    sprintf(snake_print_buffer, "Snake length: %d", snake.len);
+    uart_println(snake_print_buffer);
+    sprintf(snake_print_buffer, "Snake direction: %d", snake.dir);
+    uart_println(snake_print_buffer);
+    sprintf(snake_print_buffer, "Snake alive: %d", snake.alive);
+    uart_println(snake_print_buffer);
+    sprintf(snake_print_buffer, "Snake score: %d", snake.score);
+    uart_println(snake_print_buffer);
+    
+    BodyPart_t* p_body = snake.body;
+    while (p_body->valid) {
+        sprintf(snake_print_buffer, "Body part: (%d, %d)", p_body->pos.x, p_body->pos.y);
+        uart_println(snake_print_buffer);
+        p_body++;
+    }
+    uart_println("End of snake body");
+    return;
+}
+
+
+/**
+ * @brief Initialize the snake object
+ * @return the snake object
+*/
+Snake_t snake_init() {
+    Snake_t snake;
+    snake.len = 3;
+    snake.dir = NORTH;
+    snake.alive = 1;
+    snake.score = 0;
+    
+    for (int i = 0; i < snake.len; i++) {
+        snake.body[i].valid = 1;
+        snake.body[i].pos.x = START_X;
+        snake.body[i].pos.y = START_Y + i;
+    }
+
+    for (int i = snake.len; i < MAX_SNAKE_LEN; i++) {
+        snake.body[i].valid = 0;
+    }
+    return snake;
+}
+
+
+/**
+ * @brief Move the snake object
  * @return  -1 if snake ded
  *           0 if snake is alive
 */
@@ -111,33 +146,43 @@ int8_t snake_move(Snake_t* snake) {
     }
 
     // check if snake collides with itself
-    if (snake_check_collision(p_head->pos, snake->body) == -1) {
+    if (snake_hit_itself(p_head->pos, snake->body) == -1) {
         snake_die(snake);
         return -1;
     }
 
     // check if snake collides with boundary
-    if (!WITHIN_BOUNDARY(p_head->pos.x, p_head->pos.y)) {
+    if (snake_out_of_bounds(*snake)) {
         snake_die(snake);
         return -1;
     }
-
-    // ! do outside
-    // check if snake eats food
-
 
     return 0;
 }
 
 
 /**
+ * @brief Check if snake is within the boundary
+ * @return  non-zero if out of boundary
+ *          0 if in
+*/
+int8_t snake_out_of_bounds(Snake_t snake) {
+    Point_t snake_head = snake.body[0].pos;
+    return ((snake_head.x == 0 && snake.dir == WEST ) ||
+            (snake_head.x == VGA_WIDTH - 1 && snake.dir == EAST) ||
+            (snake_head.y == 0 && snake.dir == NORTH) ||
+            (snake_head.y == VGA_HEIGHT - 1 && snake.dir == SOUTH));
+}
+
+/**
+ * @brief Check if snake collides with itself
  * @return  0 if snake is alive,
  *          non-zero if snake is ded  
 */
-int8_t snake_check_collision(Point_t snake_head, BodyPart_t* body_parts) {
+int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts) {
     for (int i = 1; i < MAX_SNAKE_LEN; i++) {
         if (body_parts[i].valid) {
-            if (snake_head.x == body_parts[i].pos.x && snake_head.y == body_parts[i].pos.y) {
+            if (same_point(snake_head, body_parts[i].pos)) {
                 return -1;
             }
         }
@@ -150,6 +195,10 @@ int8_t snake_check_collision(Point_t snake_head, BodyPart_t* body_parts) {
 }
 
 
+/**
+ * @brief kill the snake
+ * @param snake: the snake object
+*/
 void snake_die(Snake_t* snake) {
     snake->alive = 0;
     uart_println("Snake ded");
@@ -157,6 +206,11 @@ void snake_die(Snake_t* snake) {
     return;
 }
 
+
+/**
+ * @brief Read the UART input and change the snake direction
+ * @param snake: the snake object
+*/
 void snake_change_dir(Snake_t* snake) {
     if (!uart_check_flag()) return;
 
@@ -195,6 +249,67 @@ void snake_change_dir(Snake_t* snake) {
         if (new_dir != EAST) snake->dir = new_dir;
         return;    
     }
+}
+
+
+/**
+ * @brief check snake head collides with food
+ * @return  0 if no
+ *          non-zero if yes
+*/
+uint8_t snake_check_food(Snake_t snake, Food_t food) {
+    return same_point((snake.body[0]).pos, food);
+}
+
+
+void snake_grow(Snake_t* snake) {
+    BodyPart_t* p_tail;
+    for (int i = 0; i < MAX_SNAKE_LEN; i++) {
+        if (!snake->body[i].valid) {
+            p_tail = &snake->body[i];
+            break;
+        }
+    }
+    
+
+
+    return;
+}
+
+// * --------------------------------------------------------
+// * FOOD
+// * --------------------------------------------------------
+
+/**
+ * @brief Initialize the food object
+ * @return the food object
+*/
+Food_t food_init() {
+    Food_t food;
+    food_respawn(&food);
+
+    return food;
+}
+
+
+/**
+ * @brief Respawn the food object
+ * @param food: the food object
+*/
+void food_respawn(Food_t* food) {
+    food->x = get_random(VGA_WIDTH);
+    food->y = get_random(VGA_HEIGHT);
+
+    return;
+}
+
+
+/**
+ * @brief Draw the food object
+*/
+void food_draw(Food_t food) {
+    sprintf(snake_print_buffer, "Food Pos: (%d, %d)", food.x, food.y);
+    uart_println(snake_print_buffer);
 }
 
 

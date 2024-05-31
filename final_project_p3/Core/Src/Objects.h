@@ -12,16 +12,20 @@
 #include "VGA.h"
 #include "uart.h"
 #include "stdio.h"
+#include "RNG.h"
+
+#define SNAKE_PRINT_LEN 1000
+static char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};
 
 #define START_X (10)
 #define START_Y (20)
 
 #define MAX_SNAKE_LEN (50)
 
-// #define CHECK_BOUNDARY(x, y) ((x) >= 0 && (x) < VGA_WIDTH && (y) >= 0 && (y) < VGA_HEIGHT)
-#define CHECK_VERTICAL(x) ((x) >= 0 && (x) < VGA_HEIGHT)
-#define CHECK_HORIZONTAL(y) ((y) >= 0 && (y) < VGA_WIDTH)
-#define WITHIN_BOUNDARY(x, y) (CHECK_HORIZONTAL(x) && CHECK_VERTICAL(y))
+
+// #define CHECK_HORIZONTAL(x) ((x) >= 0 && (x) < (VGA_WIDTH - 1))
+// #define CHECK_VERTICAL(y) ((y) >= 0 && (y) < VGA_HEIGHT)
+// #define WITHIN_BOUNDARY(x, y) (CHECK_HORIZONTAL(x) && CHECK_VERTICAL(y))
 
 typedef struct {
     uint8_t x;       
@@ -51,24 +55,26 @@ typedef struct {
 
 typedef Point_t Food_t;
 
+uint8_t same_point(Point_t a, Point_t b);
+
 void grid_init();
-void grid_draw(); // ? leave this to dma ?
+void grid_draw(Snake_t snake, Food_t food); // ? leave this to dma ?
 void grid_clear();
 
-void snake_init(Snake_t* snake); // done
+Snake_t snake_init(); // done
 int8_t snake_move(Snake_t* snake); 
 void snake_change_dir(Snake_t* snake);
 void snake_eat(Snake_t* snake, Food_t* food);
 void snake_grow(Snake_t* snake);
 void snake_die(Snake_t* snake);
-void snake_draw(Snake_t* snake);
-void snake_check_food(Snake_t* snake, Food_t* food);
-int8_t snake_check_collision(Point_t snake_head, BodyPart_t* body_parts); // done
+void snake_draw(Snake_t snake);
+uint8_t snake_check_food(Snake_t snake, Food_t food);
+int8_t snake_out_of_bounds(Snake_t snake);
+int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts); // done
 // void snake_respawn(Snake_t* snake);
-void snake_print(Snake_t* snake); // done
 
-// void food_init(Food_t* food);
-void food_respawn(Food_t* food, Snake_t* snake);
-void food_draw(Food_t* food);
+Food_t food_init();
+void food_respawn(Food_t* food);
+void food_draw(Food_t food);
 
 #endif /* SRC_OBJECTS_H_ */
