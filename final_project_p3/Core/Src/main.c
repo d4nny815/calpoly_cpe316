@@ -38,13 +38,12 @@ int main(void) {
     while (1) {
         snake_move(&snake);
         if (snake_check_food(snake, food)) {
-            snake_grow(&snake);
+        	snake_eat(&snake, &food);
         }
         
         grid_draw(snake, food);
 
-        HAL_Delay(300);
-//         for (int i = 0; i < 1000; i++); // delay for now
+        HAL_Delay(10);
     }
 
 

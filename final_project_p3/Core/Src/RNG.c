@@ -23,13 +23,7 @@ static uint32_t value;
 
 void rng_init() {
     MX_RNG_Init();
-
-
-    // Enable AHB RNG clock
-    RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN;
-
-    // enable rng_clk pll
-
+    RCC->AHB2ENR |= RCC_AHB2ENR_RNGEN; // shpuld already be enabled by HAL
 
     return;
 }

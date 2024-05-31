@@ -16,6 +16,8 @@ uint8_t same_point(Point_t a, Point_t b) {
  * @brief Initialize the grid with black color
 */
 void grid_init() {
+    // TODO: SPI display
+    // TODO: DMA
     for (int i = 0; i < VGA_WIDTH; i++) {
         for (int j = 0; j < VGA_HEIGHT; j++) {
             frame_buffer[i + j * VGA_WIDTH].h_addr = i;
@@ -32,11 +34,12 @@ void grid_init() {
  * @brief Clear the grid with black color
 */
 void grid_clear() {
-    for (int i = 0; i < VGA_WIDTH; i++) {
-        for (int j = 0; j < VGA_HEIGHT; j++) {
-            frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
-        }
-    }
+    // TODO: SPI display
+    // for (int i = 0; i < VGA_WIDTH; i++) {
+    //     for (int j = 0; j < VGA_HEIGHT; j++) {
+    //         frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
+    //     }
+    // }
 
     return;
 }
@@ -50,8 +53,22 @@ void grid_clear() {
 */
 void grid_draw(Snake_t snake, Food_t food) {
     uart_clear_screen();
-    snake_draw(snake);
-    food_draw(food);        
+//    snake_draw(snake);
+//    food_draw(food);
+
+    static char buf[1000];
+
+    BodyPart_t* p_body = snake.body;
+    while (p_body->valid) {
+        sprintf(buf, "[%u;%uH", p_body->pos.y, p_body->pos.x);
+        uart_send_escape(buf);
+        uart_send_char('O');
+        p_body++;
+    }
+
+    sprintf(buf, "[%u;%uH", food.y, food.x);
+    uart_send_escape(buf);
+    uart_send_char('X');  
 
     return;
 }
@@ -88,7 +105,7 @@ void snake_draw(Snake_t snake) {
 */
 Snake_t snake_init() {
     Snake_t snake;
-    snake.len = 3;
+    snake.len = 10;
     snake.dir = NORTH;
     snake.alive = 1;
     snake.score = 0;
@@ -118,6 +135,12 @@ int8_t snake_move(Snake_t* snake) {
 
     snake_change_dir(snake);
 
+    // check if snake collides with boundary
+    if (snake_out_of_bounds(*snake)) {
+        snake_die(snake);
+        return -1;
+    }
+
     BodyPart_t* p_head = &snake->body[0];
     // BodyPart_t* p_tail = &snake->body[snake->len - 1];
 
@@ -145,14 +168,9 @@ int8_t snake_move(Snake_t* snake) {
             break;
     }
 
+    // TODO: check if fully working
     // check if snake collides with itself
     if (snake_hit_itself(p_head->pos, snake->body) == -1) {
-        snake_die(snake);
-        return -1;
-    }
-
-    // check if snake collides with boundary
-    if (snake_out_of_bounds(*snake)) {
         snake_die(snake);
         return -1;
     }
@@ -173,6 +191,7 @@ int8_t snake_out_of_bounds(Snake_t snake) {
             (snake_head.y == 0 && snake.dir == NORTH) ||
             (snake_head.y == VGA_HEIGHT - 1 && snake.dir == SOUTH));
 }
+
 
 /**
  * @brief Check if snake collides with itself
@@ -262,6 +281,10 @@ uint8_t snake_check_food(Snake_t snake, Food_t food) {
 }
 
 
+/**
+ * @brief Grow the snake
+ * @param snake: the snake object
+*/
 void snake_grow(Snake_t* snake) {
     BodyPart_t* p_tail;
     for (int i = 0; i < MAX_SNAKE_LEN; i++) {
@@ -270,8 +293,25 @@ void snake_grow(Snake_t* snake) {
             break;
         }
     }
-    
 
+    p_tail->valid = 1;
+    p_tail->pos = snake->body[snake->len - 1].pos;
+    snake->len++;
+    snake->score++;
+
+    return;
+}
+
+
+/**
+ * @brief Eat the food
+ * @param snake: the snake object
+ * @param food: the food object
+*/
+void snake_eat(Snake_t* snake, Food_t* food) {
+    uart_println("Eating food");
+    snake_grow(snake);
+    food_respawn(food);
 
     return;
 }
