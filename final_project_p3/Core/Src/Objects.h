@@ -14,7 +14,7 @@
 #include "stdio.h"
 #include "RNG.h"
 
-#define SNAKE_PRINT_LEN 1000
+#define SNAKE_PRINT_LEN 100
 static char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};
 
 #define START_X (30)
@@ -45,6 +45,7 @@ typedef enum {
 typedef struct {
     uint8_t len;
     BodyPart_t body[MAX_SNAKE_LEN];
+    BodyPart_t* tail;
     Direction_t dir;
     // uint8_t speed;
     uint8_t alive;
@@ -59,7 +60,7 @@ void grid_init();
 void grid_draw(Snake_t snake, Food_t food); // ? leave this to dma ?
 void grid_clear();
 
-Snake_t snake_init(); // done
+void snake_init(Snake_t* snake); // done
 int8_t snake_move(Snake_t* snake); 
 void snake_change_dir(Snake_t* snake); // done
 void snake_eat(Snake_t* snake, Food_t* food); // done

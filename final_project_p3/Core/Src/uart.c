@@ -40,7 +40,7 @@ void uart_init(void) {
     USART2->CR1 |= USART_CR1_UE;   // enable USART2
 
     uart_clear_screen();
-    uart_send_escape("[?25l"); // hide cursor
+//    uart_send_escape("[?25l"); // hide cursor
     return;
 }
 
@@ -78,6 +78,15 @@ void uart_send_escape(const char* str) {
 void uart_clear_screen(void) {
     uart_send_escape("[2J");
     uart_send_escape("[H");
+
+    return;
+}
+
+
+void uart_clear_char(uint16_t x, uint16_t y) {
+    char buf[10];
+    sprintf(buf, "[%u;%uH", y, x);
+    uart_send_escape(buf);
 
     return;
 }

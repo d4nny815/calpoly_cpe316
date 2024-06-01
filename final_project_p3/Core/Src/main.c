@@ -31,7 +31,8 @@ int main(void) {
     rng_init();
     uart_init();
 
-    Snake_t snake = snake_init();
+    Snake_t snake;
+    snake_init(&snake);
     Food_t food = food_init();
 
 
@@ -43,7 +44,7 @@ int main(void) {
         
         grid_draw(snake, food);
 
-        HAL_Delay(10);
+        HAL_Delay(100);
     }
 
 

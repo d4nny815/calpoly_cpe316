@@ -18,13 +18,14 @@ uint8_t same_point(Point_t a, Point_t b) {
 void grid_init() {
     // TODO: SPI display
     // TODO: DMA
-    for (int i = 0; i < VGA_WIDTH; i++) {
-        for (int j = 0; j < VGA_HEIGHT; j++) {
-            frame_buffer[i + j * VGA_WIDTH].h_addr = i;
-            frame_buffer[i + j * VGA_WIDTH].v_addr = j;
-            frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
-        }
-    }
+    // for (int i = 0; i < VGA_WIDTH; i++) {
+        // for (int j = 0; j < VGA_HEIGHT; j++) {
+            // frame_buffer[i + j * VGA_WIDTH].h_addr = i;
+            // frame_buffer[i + j * VGA_WIDTH].v_addr = j;
+            // frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
+        // }
+    // }
+
 
     return;
 }
@@ -52,23 +53,9 @@ void grid_clear() {
  * @param food: the food object
 */
 void grid_draw(Snake_t snake, Food_t food) {
-    uart_clear_screen();
-//    snake_draw(snake);
-//    food_draw(food);
-
-    static char buf[1000];
-
-    BodyPart_t* p_body = snake.body;
-    while (p_body->valid) {
-        sprintf(buf, "[%u;%uH", p_body->pos.y, p_body->pos.x);
-        uart_send_escape(buf);
-        uart_send_char('O');
-        p_body++;
-    }
-
-    sprintf(buf, "[%u;%uH", food.y, food.x);
-    uart_send_escape(buf);
-    uart_send_char('X');  
+    // uart_clear_screen();
+    snake_draw(snake);
+    food_draw(food);
 
     return;
 }
@@ -79,22 +66,17 @@ void grid_draw(Snake_t snake, Food_t food) {
  * @param snake: the snake object
 */
 void snake_draw(Snake_t snake) {
-    sprintf(snake_print_buffer, "Snake length: %d", snake.len);
-    uart_println(snake_print_buffer);
-    sprintf(snake_print_buffer, "Snake direction: %d", snake.dir);
-    uart_println(snake_print_buffer);
-    sprintf(snake_print_buffer, "Snake alive: %d", snake.alive);
-    uart_println(snake_print_buffer);
-    sprintf(snake_print_buffer, "Snake score: %d", snake.score);
-    uart_println(snake_print_buffer);
+    // erase tail
+    sprintf(snake_print_buffer, "[%u;%uH", snake.tail->pos.y, snake.tail->pos.x);
+    uart_send_escape(snake_print_buffer);
+    uart_send_char(' ');
+
+    // draw head
+    sprintf(snake_print_buffer, "[%u;%uH", snake.body[0].pos.y, snake.body[0].pos.x);
+    uart_send_escape(snake_print_buffer);
+    uart_send_char('O');
+
     
-    BodyPart_t* p_body = snake.body;
-    while (p_body->valid) {
-        sprintf(snake_print_buffer, "Body part: (%d, %d)", p_body->pos.x, p_body->pos.y);
-        uart_println(snake_print_buffer);
-        p_body++;
-    }
-    uart_println("End of snake body");
     return;
 }
 
@@ -103,23 +85,35 @@ void snake_draw(Snake_t snake) {
  * @brief Initialize the snake object
  * @return the snake object
 */
-Snake_t snake_init() {
-    Snake_t snake;
-    snake.len = 10;
-    snake.dir = NORTH;
-    snake.alive = 1;
-    snake.score = 0;
+void snake_init(Snake_t* snake) {
+    snake->len = 3;
+    snake->dir = NORTH;
+    snake->alive = 1;
+    snake->score = 0;
     
-    for (int i = 0; i < snake.len; i++) {
-        snake.body[i].valid = 1;
-        snake.body[i].pos.x = START_X;
-        snake.body[i].pos.y = START_Y + i;
+    int i;
+    for (i = 0; i < snake->len; i++) {
+        snake->body[i].valid = 1;
+        snake->body[i].pos.x = START_X;
+        snake->body[i].pos.y = START_Y + i;
     }
 
-    for (int i = snake.len; i < MAX_SNAKE_LEN; i++) {
-        snake.body[i].valid = 0;
+    snake->tail = &(snake->body[i - 1]);
+
+    for (i = snake->len; i < MAX_SNAKE_LEN; i++) {
+        snake->body[i].valid = 0;
     }
-    return snake;
+    
+    // draw initial snake
+    BodyPart_t body;
+    for (int i = 0; i < snake->len - 1; i++) {
+        body = snake->body[i];
+        sprintf(snake_print_buffer, "[%u;%uH", body.pos.y, body.pos.x);
+        uart_send_escape(snake_print_buffer);
+        uart_send_char('O');
+    }
+
+    return;
 }
 
 
@@ -142,7 +136,6 @@ int8_t snake_move(Snake_t* snake) {
     }
 
     BodyPart_t* p_head = &snake->body[0];
-    // BodyPart_t* p_tail = &snake->body[snake->len - 1];
 
     // move body parts
     for (int i = snake->len - 1; i > 0; i--) {
@@ -286,16 +279,19 @@ uint8_t snake_check_food(Snake_t snake, Food_t food) {
  * @param snake: the snake object
 */
 void snake_grow(Snake_t* snake) {
-    BodyPart_t* p_tail;
-    for (int i = 0; i < MAX_SNAKE_LEN; i++) {
-        if (!snake->body[i].valid) {
-            p_tail = &snake->body[i];
-            break;
-        }
-    }
+    // BodyPart_t* p_tail;
+    // for (int i = 0; i < MAX_SNAKE_LEN; i++) {
+        // if (!snake->body[i].valid) {
+            // p_tail = &snake->body[i];
+            // break;
+        // }
+    // }
 
-    p_tail->valid = 1;
-    p_tail->pos = snake->body[snake->len - 1].pos;
+    
+    snake->body[snake->len].valid = 1;
+    snake->body[snake->len].pos = snake->body[snake->len - 1].pos;
+    snake->tail = &snake->body[snake->len];
+    
     snake->len++;
     snake->score++;
 
@@ -309,7 +305,7 @@ void snake_grow(Snake_t* snake) {
  * @param food: the food object
 */
 void snake_eat(Snake_t* snake, Food_t* food) {
-    uart_println("Eating food");
+    // uart_println("Eating food");
     snake_grow(snake);
     food_respawn(food);
 
@@ -327,6 +323,7 @@ void snake_eat(Snake_t* snake, Food_t* food) {
 Food_t food_init() {
     Food_t food;
     food_respawn(&food);
+    food_draw(food);
 
     return food;
 }
@@ -348,8 +345,13 @@ void food_respawn(Food_t* food) {
  * @brief Draw the food object
 */
 void food_draw(Food_t food) {
-    sprintf(snake_print_buffer, "Food Pos: (%d, %d)", food.x, food.y);
-    uart_println(snake_print_buffer);
+    sprintf(snake_print_buffer, "[%u;%uH", food.y, food.x);
+    uart_send_escape(snake_print_buffer);
+    uart_send_char('X');
+
+    // sprintf(snake_print_buffer, "Food Pos: (%d, %d)", food.x, food.y);
+    // uart_println(snake_print_buffer);
+    return;
 }
 
 

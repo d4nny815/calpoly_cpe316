@@ -10,8 +10,10 @@
 
 #include "main.h"
 
-#define VGA_WIDTH (256)
-#define VGA_HEIGHT (192)
+// #define VGA_WIDTH (256)
+// #define VGA_HEIGHT (192)
+#define VGA_WIDTH (100)
+#define VGA_HEIGHT (100)
 #define FRAME_BUFFER_SIZE (VGA_WIDTH * VGA_HEIGHT)
 
 typedef struct {
