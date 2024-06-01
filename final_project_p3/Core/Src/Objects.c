@@ -112,7 +112,7 @@ void snake_init(Snake_t* snake) {
     snake->score = 0;
     
     uint8_t x = get_random(LEFT_BOUND, RIGHT_BOUND);
-    uint8_t y = get_random(TOP_BOUND, BOTTOM_BOUND);
+    uint8_t y = get_random(TOP_BOUND, BOTTOM_BOUND + snake->len);
 
     for (int i = 0; i < snake->len; i++) {
         snake->body[i].valid = 1;
@@ -236,27 +236,48 @@ void snake_die(Snake_t* snake) {
  * @param snake: the snake object
 */
 void snake_change_dir(Snake_t* snake) {
-    if (!uart_check_flag()) return;
+    // if (!uart_check_flag()) return;
 
-    uart_clear_flag();
+    uint16_t joy_x = get_joystick_x();
+    uint16_t joy_y = get_joystick_y();
+
+    // uart_clear_flag();
     Direction_t new_dir;
-    char c = get_uart_char();
+    // char c = get_uart_char();
     
-    switch (c) {
-    case 'w':
-        new_dir = NORTH;
-        break;
-    case 'a':
-        new_dir = WEST;
-        break;
-    case 's':
-        new_dir = SOUTH;
-        break;
-    case 'd':
+    // TODO: make these #define
+    if (joy_x > 3000) {
         new_dir = EAST;
-        break;
-    default: return;    
     }
+    else if (joy_x < 1000) {
+        new_dir = WEST;
+    }
+    else if (joy_y > 3000) {
+        new_dir = SOUTH;
+    }
+    else if (joy_y < 1000) {
+        new_dir = NORTH;
+    }
+    else {
+        return;
+    }
+
+
+    // switch (c) {
+    // case 'w':
+    //     new_dir = NORTH;
+    //     break;
+    // case 'a':
+    //     new_dir = WEST;
+    //     break;
+    // case 's':
+    //     new_dir = SOUTH;
+    //     break;
+    // case 'd':
+    //     new_dir = EAST;
+    //     break;
+    // default: return;    
+    // }
 
     // change dir as long as not 180, if same dir then nothing happens
     switch (snake->dir) {

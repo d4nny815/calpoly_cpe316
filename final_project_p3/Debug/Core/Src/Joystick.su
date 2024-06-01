@@ -1,0 +1,6 @@
+../Core/Src/Joystick.c:10:6:joystick_pin_init	4	static
+../Core/Src/Joystick.c:26:6:ADC_init	16	static
+../Core/Src/Joystick.c:73:6:joystick_init	8	static
+../Core/Src/Joystick.c:80:10:get_joystick_x	4	static
+../Core/Src/Joystick.c:87:10:get_joystick_y	4	static
+../Core/Src/Joystick.c:94:9:get_joystick_button	4	static

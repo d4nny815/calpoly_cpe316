@@ -13,6 +13,7 @@
 #include "uart.h"
 #include "stdio.h"
 #include "RNG.h"
+#include "Joystick.h"
 
 #define SNAKE_PRINT_LEN 100
 static char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};

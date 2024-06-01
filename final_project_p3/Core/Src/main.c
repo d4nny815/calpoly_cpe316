@@ -22,6 +22,7 @@
 #include "Objects.h"
 #include "RNG.h"
 #include "Screen.h"
+#include "Joystick.h"
 
 typedef enum {
     START,
@@ -39,11 +40,13 @@ int main(void) {
 
     rng_init();
     uart_init();
+    joystick_init();
 
     Snake_t snake;
     Food_t food;
     GameState_t state = START;
     print_start_screen();
+
 
     while (1) {
         switch (state) {
@@ -84,11 +87,11 @@ int main(void) {
 }
 
 int continue_on() {
-    if (!uart_check_flag()) return 0;
-    uart_clear_flag();
+//    if (!uart_check_flag()) return 0;
+//    uart_clear_flag();
 
-    char c = get_uart_char();
-    return c == 'y';
+//    char c = get_uart_char();
+    return get_joystick_button();
 }
 
 /**

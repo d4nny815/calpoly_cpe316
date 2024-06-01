@@ -1,3 +1,4 @@
+"./Core/Src/Joystick.o"
 "./Core/Src/Objects.o"
 "./Core/Src/RNG.o"
 "./Core/Src/Screen.o"
