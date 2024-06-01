@@ -21,6 +21,15 @@
 #include "uart.h"
 #include "Objects.h"
 #include "RNG.h"
+#include "Screen.h"
+
+typedef enum {
+    START,
+    PLAYING,
+    GAME_OVER
+} GameState_t;
+
+int continue_on();
 
 void SystemClock_Config(void);
 
@@ -32,22 +41,54 @@ int main(void) {
     uart_init();
 
     Snake_t snake;
-    snake_init(&snake);
-    Food_t food = food_init();
-
+    Food_t food;
+    GameState_t state = START;
+    print_start_screen();
 
     while (1) {
-        snake_move(&snake);
-        if (snake_check_food(snake, food)) {
-        	snake_eat(&snake, &food);
+        switch (state) {
+        case START:
+            if (continue_on()) {
+                state = PLAYING;
+                grid_init();
+                snake_init(&snake);
+                food = food_init();
+            }
+            break;
+        case PLAYING:
+            snake_move(&snake);
+            if (snake_check_food(snake, food)) {
+                snake_eat(&snake, &food);
+            }
+            grid_draw(snake, food);
+
+            if (!snake.alive) {
+                state = GAME_OVER;
+                print_game_over();
+            }
+            break;
+        case GAME_OVER:
+            if (continue_on()) {
+            	state = PLAYING;
+            	grid_init();
+            	snake_init(&snake);
+            	food = food_init();
+            }
+            break;
         }
-        
-        grid_draw(snake, food);
 
         HAL_Delay(100);
     }
 
+    return 0;
+}
 
+int continue_on() {
+    if (!uart_check_flag()) return 0;
+    uart_clear_flag();
+
+    char c = get_uart_char();
+    return c == 'y';
 }
 
 /**

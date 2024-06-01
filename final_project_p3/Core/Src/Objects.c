@@ -7,6 +7,8 @@
 
 #include "Objects.h"
 
+static BodyPart_t old_tail;
+
 uint8_t same_point(Point_t a, Point_t b) {
     return (a.x == b.x && a.y == b.y);
 }
@@ -16,16 +18,32 @@ uint8_t same_point(Point_t a, Point_t b) {
  * @brief Initialize the grid with black color
 */
 void grid_init() {
-    // TODO: SPI display
-    // TODO: DMA
-    // for (int i = 0; i < VGA_WIDTH; i++) {
-        // for (int j = 0; j < VGA_HEIGHT; j++) {
-            // frame_buffer[i + j * VGA_WIDTH].h_addr = i;
-            // frame_buffer[i + j * VGA_WIDTH].v_addr = j;
-            // frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
-        // }
-    // }
+    uart_clear_screen();
+    uart_send_escape("[0m"); // reset color
 
+    // print top and bottom border
+    sprintf(snake_print_buffer, "[%u;%uH", TOP_BOUND, LEFT_BOUND);
+    uart_send_escape(snake_print_buffer);
+    for (int i = LEFT_BOUND; i < RIGHT_BOUND; i++) {
+        uart_send_char('=');
+    }
+
+    sprintf(snake_print_buffer, "[%u;%uH", BOTTOM_BOUND, LEFT_BOUND);
+    uart_send_escape(snake_print_buffer);
+    for (int i = LEFT_BOUND; i < RIGHT_BOUND; i++) {
+        uart_send_char('=');
+    }
+
+    // print left and right border
+    for (int i = TOP_BOUND; i < BOTTOM_BOUND + 1; i++) {
+        sprintf(snake_print_buffer, "[%u;%uH", i, LEFT_BOUND);
+        uart_send_escape(snake_print_buffer);
+        uart_send_char('|');
+
+        sprintf(snake_print_buffer, "[%u;%uH", i, RIGHT_BOUND);
+        uart_send_escape(snake_print_buffer);
+        uart_send_char('|');
+    }
 
     return;
 }
@@ -67,13 +85,15 @@ void grid_draw(Snake_t snake, Food_t food) {
 */
 void snake_draw(Snake_t snake) {
     // erase tail
-    sprintf(snake_print_buffer, "[%u;%uH", snake.tail->pos.y, snake.tail->pos.x);
+    // sprintf(snake_print_buffer, "[%u;%uH", snake.tail->pos.y, snake.tail->pos.x);
+    sprintf(snake_print_buffer, "[%u;%uH", old_tail.pos.y, old_tail.pos.x);
     uart_send_escape(snake_print_buffer);
     uart_send_char(' ');
 
     // draw head
     sprintf(snake_print_buffer, "[%u;%uH", snake.body[0].pos.y, snake.body[0].pos.x);
     uart_send_escape(snake_print_buffer);
+    uart_send_escape("[32m"); // green
     uart_send_char('O');
 
     
@@ -86,27 +106,31 @@ void snake_draw(Snake_t snake) {
  * @return the snake object
 */
 void snake_init(Snake_t* snake) {
-    snake->len = 3;
+    snake->len = START_LEN;
     snake->dir = NORTH;
     snake->alive = 1;
     snake->score = 0;
     
-    int i;
-    for (i = 0; i < snake->len; i++) {
+    uint8_t x = get_random(LEFT_BOUND, RIGHT_BOUND);
+    uint8_t y = get_random(TOP_BOUND, BOTTOM_BOUND);
+
+    for (int i = 0; i < snake->len; i++) {
         snake->body[i].valid = 1;
-        snake->body[i].pos.x = START_X;
-        snake->body[i].pos.y = START_Y + i;
+        snake->body[i].pos.x = x;
+        snake->body[i].pos.y = y + i;
     }
 
-    snake->tail = &(snake->body[i - 1]);
+    snake->tail = &(snake->body[snake->len - 1]);
+    old_tail = *(snake->tail);
 
-    for (i = snake->len; i < MAX_SNAKE_LEN; i++) {
+    for (int i = snake->len; i < MAX_SNAKE_LEN; i++) {
         snake->body[i].valid = 0;
     }
     
     // draw initial snake
+    uart_send_escape("[32m"); // green
     BodyPart_t body;
-    for (int i = 0; i < snake->len - 1; i++) {
+    for (int i = 0; i < snake->len; i++) {
         body = snake->body[i];
         sprintf(snake_print_buffer, "[%u;%uH", body.pos.y, body.pos.x);
         uart_send_escape(snake_print_buffer);
@@ -130,12 +154,15 @@ int8_t snake_move(Snake_t* snake) {
     snake_change_dir(snake);
 
     // check if snake collides with boundary
-    if (snake_out_of_bounds(*snake)) {
+    // if (snake_out_of_bounds(*snake)) {
+    if (!WITHIN_BOUND(snake->body[0].pos.x, snake->body[0].pos.y)) {
         snake_die(snake);
         return -1;
     }
 
     BodyPart_t* p_head = &snake->body[0];
+
+    old_tail = *(snake->tail);
 
     // move body parts
     for (int i = snake->len - 1; i > 0; i--) {
@@ -161,7 +188,6 @@ int8_t snake_move(Snake_t* snake) {
             break;
     }
 
-    // TODO: check if fully working
     // check if snake collides with itself
     if (snake_hit_itself(p_head->pos, snake->body) == -1) {
         snake_die(snake);
@@ -169,20 +195,6 @@ int8_t snake_move(Snake_t* snake) {
     }
 
     return 0;
-}
-
-
-/**
- * @brief Check if snake is within the boundary
- * @return  non-zero if out of boundary
- *          0 if in
-*/
-int8_t snake_out_of_bounds(Snake_t snake) {
-    Point_t snake_head = snake.body[0].pos;
-    return ((snake_head.x == 0 && snake.dir == WEST ) ||
-            (snake_head.x == VGA_WIDTH - 1 && snake.dir == EAST) ||
-            (snake_head.y == 0 && snake.dir == NORTH) ||
-            (snake_head.y == VGA_HEIGHT - 1 && snake.dir == SOUTH));
 }
 
 
@@ -334,8 +346,8 @@ Food_t food_init() {
  * @param food: the food object
 */
 void food_respawn(Food_t* food) {
-    food->x = get_random(VGA_WIDTH);
-    food->y = get_random(VGA_HEIGHT);
+    food->x = get_random(LEFT_BOUND, RIGHT_BOUND);
+    food->y = get_random(TOP_BOUND, BOTTOM_BOUND);
 
     return;
 }
@@ -347,6 +359,7 @@ void food_respawn(Food_t* food) {
 void food_draw(Food_t food) {
     sprintf(snake_print_buffer, "[%u;%uH", food.y, food.x);
     uart_send_escape(snake_print_buffer);
+    uart_send_escape("[31m"); // red
     uart_send_char('X');
 
     // sprintf(snake_print_buffer, "Food Pos: (%d, %d)", food.x, food.y);

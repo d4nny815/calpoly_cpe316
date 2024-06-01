@@ -28,12 +28,12 @@ void rng_init() {
     return;
 }
 
-uint32_t get_random(uint32_t n) {
+uint32_t get_random(uint32_t lower, uint32_t upper) {
     RNG->CR |= RNG_CR_RNGEN;
 
     while (!(RNG->SR & RNG_SR_DRDY));
 
     value = RNG->DR;
 
-    return value % n;
+    return (value % (upper - lower + 1) + lower);
 }

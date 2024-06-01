@@ -10,10 +10,8 @@
 
 #include "main.h"
 
-
-
 void rng_init();
-uint32_t get_random(uint32_t n); // ? maybe have a queue for random values, so instant value?
+uint32_t get_random(uint32_t lower, uint32_t upper); // ? maybe have a queue for random values, so instant value?
 
 
 

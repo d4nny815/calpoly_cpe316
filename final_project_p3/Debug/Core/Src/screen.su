@@ -1,1 +1,2 @@
-../Core/Src/screen.c:10:6:print_start_screen	8	static
+../Core/Src/Screen.c:10:6:print_start_screen	16	static
+../Core/Src/Screen.c:20:6:print_game_over	16	static

@@ -19,11 +19,20 @@ static char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};
 
 #define START_X (30)
 #define START_Y (20)
+#define START_LEN (5)
 #define MAX_SNAKE_LEN (50)
 
-// #define CHECK_HORIZONTAL(x) ((x) >= 0 && (x) < (VGA_WIDTH - 1))
-// #define CHECK_VERTICAL(y) ((y) >= 0 && (y) < VGA_HEIGHT)
-// #define WITHIN_BOUNDARY(x, y) (CHECK_HORIZONTAL(x) && CHECK_VERTICAL(y))
+
+#define LEFT_BOUND (8)
+#define RIGHT_BOUND (200)
+#define TOP_BOUND (3)
+#define BOTTOM_BOUND (70)
+#define TEXT_VERTICAL_CURSOR (65)
+
+#define CHECK_HORIZONTAL(x) ((x) > LEFT_BOUND && (x) < RIGHT_BOUND)
+#define CHECK_VERTICAL(y) ((y) > TOP_BOUND && (y) < BOTTOM_BOUND)
+#define WITHIN_BOUND(x, y) (CHECK_HORIZONTAL(x) && CHECK_VERTICAL(y))
+
 
 typedef struct {
     uint8_t x;       
@@ -68,7 +77,7 @@ void snake_grow(Snake_t* snake); // done
 void snake_die(Snake_t* snake); // done
 void snake_draw(Snake_t snake);
 uint8_t snake_check_food(Snake_t snake, Food_t food); // done
-int8_t snake_out_of_bounds(Snake_t snake); // done
+// int8_t snake_out_of_bounds(Snake_t snake); // done
 int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts); // done
 
 
