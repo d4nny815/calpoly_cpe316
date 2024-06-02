@@ -24,18 +24,18 @@ void grid_init(uint8_t high_score) {
     // print top and bottom border
     sprintf(snake_print_buffer, "[%u;%uH", TOP_BOUND, LEFT_BOUND);
     uart_send_escape(snake_print_buffer);
-    for (int i = LEFT_BOUND; i < RIGHT_BOUND; i++) {
+    for (int i = LEFT_BOUND; i < RIGHT_BOUND + 1; i++) {
         uart_send_char('=');
     }
 
     sprintf(snake_print_buffer, "[%u;%uH", BOTTOM_BOUND, LEFT_BOUND);
     uart_send_escape(snake_print_buffer);
-    for (int i = LEFT_BOUND; i < RIGHT_BOUND; i++) {
+    for (int i = LEFT_BOUND; i < RIGHT_BOUND + 1; i++) {
         uart_send_char('=');
     }
 
     // print left and right border
-    for (int i = TOP_BOUND; i < BOTTOM_BOUND + 1; i++) {
+    for (int i = TOP_BOUND + 1; i < BOTTOM_BOUND; i++) {
         sprintf(snake_print_buffer, "[%u;%uH", i, LEFT_BOUND);
         uart_send_escape(snake_print_buffer);
         uart_send_char('|');

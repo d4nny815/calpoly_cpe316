@@ -24,11 +24,16 @@
 #include "Screen.h"
 #include "Joystick.h"
 
+#define START_FPS (10)
+#define SPEED_UP_FACTOR (1.15f)
+
 typedef enum {
     START,
     PLAYING,
     GAME_OVER
 } GameState_t;
+
+
 
 int continue_on();
 
@@ -62,7 +67,7 @@ int main(void) {
                 grid_init(high_score);
                 snake_init(&snake);
                 food = food_init();
-                fps = snake.len;
+                fps = START_FPS;
                 change_fps(fps);
 
             }
@@ -82,7 +87,7 @@ int main(void) {
             snake_move(&snake);
             if (snake_check_food(snake, food)) {
                 snake_eat(&snake, &food);
-                fps += snake_get_score(snake) * 1.15;
+                fps *= SPEED_UP_FACTOR;
                 change_fps(fps);
             }
             grid_draw(snake, food);
@@ -100,7 +105,7 @@ int main(void) {
             	snake_init(&snake);
             	food = food_init();
             	first_move = 0;
-                fps = snake.len;
+                fps = START_FPS;
                 change_fps(fps);
             }
             break;
