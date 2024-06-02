@@ -17,12 +17,15 @@ void print_start_screen() {
     return;
 }
 
-void print_game_over() {
+void print_game_over(uint8_t score, uint8_t high_score) {
+    char buf[100];
     uart_clear_screen();
     uart_send_escape("[0m"); // reset color
     for (int i = 0; i < GAME_OVER_LEN; i++) {
         uart_println(GAME_OVER_SCREEN[i]);
     }
+    sprintf(buf, "Score: %u HIGH SCORE: %u", score, high_score);
+    uart_println(buf);
     return;
 }
 

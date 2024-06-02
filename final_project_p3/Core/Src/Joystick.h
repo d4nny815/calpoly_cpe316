@@ -14,6 +14,11 @@
 #define ADC_REF ((1 << 12) - 1)
 #define ADC_TO_MV(x) (x * VREF / ADC_REF)
 
+#define LEFT_QUARTER ((uint16_t)(ADC_REF / 4.0))
+#define RIGHT_QUARTER ((uint16_t)(ADC_REF * 3 / 4.0))
+#define TOP_QUARTER ((uint16_t)(ADC_REF * 3/ 4.0))
+#define BOTTOM_QUARTER ((uint16_t)(ADC_REF / 4.0))
+
 void joystick_pin_init();
 void ADC_init();
 void joystick_init();

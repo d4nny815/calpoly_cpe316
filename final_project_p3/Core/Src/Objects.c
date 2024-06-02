@@ -17,7 +17,7 @@ uint8_t same_point(Point_t a, Point_t b) {
 /**
  * @brief Initialize the grid with black color
 */
-void grid_init() {
+void grid_init(uint8_t high_score) {
     uart_clear_screen();
     uart_send_escape("[0m"); // reset color
 
@@ -44,6 +44,18 @@ void grid_init() {
         uart_send_escape(snake_print_buffer);
         uart_send_char('|');
     }
+
+    sprintf(snake_print_buffer, "[%u;%uH", BOTTOM_BOUND + 5, RIGHT_BOUND - 15);
+    uart_send_escape(snake_print_buffer);
+    sprintf(snake_print_buffer, "High Score: %u", high_score);
+    uart_send_string(snake_print_buffer);
+
+    sprintf(snake_print_buffer, "[%u;%uH", SCORE_CURSOR_Y, SCORE_CURSOR_X - 7);
+    uart_send_escape(snake_print_buffer);
+    uart_send_string("Score: ");
+
+
+
 
     return;
 }
@@ -73,7 +85,6 @@ void grid_clear() {
 void grid_draw(Snake_t snake, Food_t food) {
     // uart_clear_screen();
     snake_draw(snake);
-    food_draw(food);
 
     return;
 }
@@ -96,6 +107,11 @@ void snake_draw(Snake_t snake) {
     uart_send_escape("[32m"); // green
     uart_send_char('O');
 
+    // print current score
+    sprintf(snake_print_buffer, "[%u;%uH", SCORE_CURSOR_Y, SCORE_CURSOR_X);
+    uart_send_escape(snake_print_buffer);
+    sprintf(snake_print_buffer, "%u", snake.score);
+    uart_send_string(snake_print_buffer);
     
     return;
 }
@@ -111,8 +127,8 @@ void snake_init(Snake_t* snake) {
     snake->alive = 1;
     snake->score = 0;
     
-    uint8_t x = get_random(LEFT_BOUND, RIGHT_BOUND);
-    uint8_t y = get_random(TOP_BOUND, BOTTOM_BOUND + snake->len);
+    uint8_t x = get_random(LEFT_BOUND + START_BOUNDARY_OFFSET, RIGHT_BOUND - START_BOUNDARY_OFFSET);
+    uint8_t y = get_random(TOP_BOUND + START_BOUNDARY_OFFSET, BOTTOM_BOUND - START_BOUNDARY_OFFSET - snake->len - 1);
 
     for (int i = 0; i < snake->len; i++) {
         snake->body[i].valid = 1;
@@ -154,7 +170,6 @@ int8_t snake_move(Snake_t* snake) {
     snake_change_dir(snake);
 
     // check if snake collides with boundary
-    // if (snake_out_of_bounds(*snake)) {
     if (!WITHIN_BOUND(snake->body[0].pos.x, snake->body[0].pos.y)) {
         snake_die(snake);
         return -1;
@@ -234,66 +249,57 @@ void snake_die(Snake_t* snake) {
 /**
  * @brief Read the UART input and change the snake direction
  * @param snake: the snake object
+ * @return 0 if no change
+ *          non zero if change
 */
-void snake_change_dir(Snake_t* snake) {
-    // if (!uart_check_flag()) return;
-
+uint8_t snake_change_dir(Snake_t* snake) {
     uint16_t joy_x = get_joystick_x();
     uint16_t joy_y = get_joystick_y();
 
-    // uart_clear_flag();
     Direction_t new_dir;
-    // char c = get_uart_char();
-    
-    // TODO: make these #define
-    if (joy_x > 3000) {
-        new_dir = EAST;
-    }
-    else if (joy_x < 1000) {
-        new_dir = WEST;
-    }
-    else if (joy_y > 3000) {
-        new_dir = SOUTH;
-    }
-    else if (joy_y < 1000) {
-        new_dir = NORTH;
+    uint8_t x_axis;
+
+    x_axis = abs(joy_x - 2048) > abs(joy_y - 2048); 
+
+    if (x_axis) {
+        if (joy_x > RIGHT_QUARTER) {
+            new_dir = EAST;
+        }
+        else if (joy_x < LEFT_QUARTER) {
+            new_dir = WEST;
+        }
+        else {
+            return 0;
+        }
     }
     else {
-        return;
+        if (joy_y > TOP_QUARTER) {
+            new_dir = NORTH;
+        }
+        else if (joy_y < BOTTOM_QUARTER) {
+            new_dir = SOUTH;
+        } else {
+            return 0;
+        }
     }
-
-
-    // switch (c) {
-    // case 'w':
-    //     new_dir = NORTH;
-    //     break;
-    // case 'a':
-    //     new_dir = WEST;
-    //     break;
-    // case 's':
-    //     new_dir = SOUTH;
-    //     break;
-    // case 'd':
-    //     new_dir = EAST;
-    //     break;
-    // default: return;    
-    // }
 
     // change dir as long as not 180, if same dir then nothing happens
     switch (snake->dir) {
     case NORTH:
         if (new_dir != SOUTH) snake->dir = new_dir;
-        return;
+        break;
     case EAST:
         if (new_dir != WEST) snake->dir = new_dir;
-        return;
+        break;
     case SOUTH:
         if (new_dir != NORTH) snake->dir = new_dir;
-        return;
+        break;
     case WEST:
         if (new_dir != EAST) snake->dir = new_dir;
-        return;    
+        break;
     }
+
+    return 1;
 }
 
 
@@ -312,15 +318,6 @@ uint8_t snake_check_food(Snake_t snake, Food_t food) {
  * @param snake: the snake object
 */
 void snake_grow(Snake_t* snake) {
-    // BodyPart_t* p_tail;
-    // for (int i = 0; i < MAX_SNAKE_LEN; i++) {
-        // if (!snake->body[i].valid) {
-            // p_tail = &snake->body[i];
-            // break;
-        // }
-    // }
-
-    
     snake->body[snake->len].valid = 1;
     snake->body[snake->len].pos = snake->body[snake->len - 1].pos;
     snake->tail = &snake->body[snake->len];
@@ -338,11 +335,20 @@ void snake_grow(Snake_t* snake) {
  * @param food: the food object
 */
 void snake_eat(Snake_t* snake, Food_t* food) {
-    // uart_println("Eating food");
     snake_grow(snake);
     food_respawn(food);
 
     return;
+}
+
+
+/**
+ * @brief get snake score
+ * @param snake: snake object
+ * @return snake score
+*/
+uint8_t snake_get_score(Snake_t snake) {
+    return snake.score;
 }
 
 // * --------------------------------------------------------
@@ -356,7 +362,6 @@ void snake_eat(Snake_t* snake, Food_t* food) {
 Food_t food_init() {
     Food_t food;
     food_respawn(&food);
-    food_draw(food);
 
     return food;
 }
@@ -367,9 +372,10 @@ Food_t food_init() {
  * @param food: the food object
 */
 void food_respawn(Food_t* food) {
-    food->x = get_random(LEFT_BOUND, RIGHT_BOUND);
-    food->y = get_random(TOP_BOUND, BOTTOM_BOUND);
+    food->x = get_random(LEFT_BOUND + 1, RIGHT_BOUND - 1);
+    food->y = get_random(TOP_BOUND + 1, BOTTOM_BOUND - 1);
 
+    food_draw(*food);
     return;
 }
 
@@ -380,11 +386,12 @@ void food_respawn(Food_t* food) {
 void food_draw(Food_t food) {
     sprintf(snake_print_buffer, "[%u;%uH", food.y, food.x);
     uart_send_escape(snake_print_buffer);
+    uart_send_escape("[5m"); // blinking
     uart_send_escape("[31m"); // red
     uart_send_char('X');
+    uart_send_escape("[0m"); // back to default
 
-    // sprintf(snake_print_buffer, "Food Pos: (%d, %d)", food.x, food.y);
-    // uart_println(snake_print_buffer);
+
     return;
 }
 

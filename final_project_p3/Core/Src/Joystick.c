@@ -8,7 +8,7 @@
 #include "Joystick.h"
 
 void joystick_pin_init() {
-    // PC0 for horizontal, PC1 for vertical
+    // PC0 for vertical, PC1 for horizontal
     // PC2 for button
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
     GPIOC->MODER |= GPIO_MODER_MODE0 | GPIO_MODER_MODE1; // Analog mode
@@ -25,7 +25,7 @@ void joystick_pin_init() {
 
 void ADC_init() {
 
-    // ADC1, IN1 for horizontal
+    // ADC1, IN1 for vertical
     RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
     ADC123_COMMON->CCR |= (1 << ADC_CCR_CKMODE_Pos); // HCLK / 1
     ADC1->CR &= ~ADC_CR_DEEPPWD; // wake up from deep-power-down mode
@@ -46,7 +46,7 @@ void ADC_init() {
     ADC1->SQR1 = (1 << ADC_SQR1_SQ1_Pos); // 1 conversion in regular sequence
     ADC1->SMPR1 = (2 << ADC_SMPR1_SMP1_Pos); // 12.5 cycles sampling time
 
-    // ADC3, IN2 for vertical
+    // ADC3, IN2 for horizontal
     RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
     ADC123_COMMON->CCR |= (1 << ADC_CCR_CKMODE_Pos); // HCLK / 1
     ADC3->CR &= ~ADC_CR_DEEPPWD; // wake up from deep-power-down mode
@@ -78,17 +78,18 @@ void joystick_init() {
 }
 
 uint16_t get_joystick_x() {
-    ADC1->CR |= ADC_CR_ADSTART; // start conversion
-    while (!(ADC1->ISR & ADC_ISR_EOC)); // wait for conversion to finish
-
-    return ADC1->DR;
-}
-
-uint16_t get_joystick_y() {
     ADC3->CR |= ADC_CR_ADSTART; // start conversion
     while (!(ADC3->ISR & ADC_ISR_EOC)); // wait for conversion to finish
 
     return ADC3->DR;
+    
+}
+
+uint16_t get_joystick_y() {
+    ADC1->CR |= ADC_CR_ADSTART; // start conversion
+    while (!(ADC1->ISR & ADC_ISR_EOC)); // wait for conversion to finish
+
+    return ADC1->DR;
 }
 
 uint8_t get_joystick_button() {

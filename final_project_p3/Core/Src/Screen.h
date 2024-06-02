@@ -22,7 +22,7 @@ static const char* START_SCREEN[START_SCREEN_LEN] = {
 		" ",
 		" ",
 		" ",
-		"Press y to start the game",
+		"Press joystick to start the game",
 	};
 
 #define GAME_OVER_LEN (10)
@@ -36,12 +36,12 @@ static const char* GAME_OVER_SCREEN[GAME_OVER_LEN] = {
 	" ",
 	" ",
 	" ",
-	"Press y to restart the game",
+	"Press joystick to restart the game",
 };
 		
 
 
 void print_start_screen();
-
+void print_game_over(uint8_t score, uint8_t high_score);
 
 #endif /* SRC_SCREEN_H_ */

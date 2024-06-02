@@ -32,6 +32,9 @@ typedef enum {
 
 int continue_on();
 
+void change_fps(uint32_t fps);
+volatile int start_frame = 0;
+
 void SystemClock_Config(void);
 
 int main(void) {
@@ -46,52 +49,103 @@ int main(void) {
     Food_t food;
     GameState_t state = START;
     print_start_screen();
+    uint32_t fps;
+    uint8_t high_score = 0;
+    
 
-
+    int first_move = 0;
     while (1) {
         switch (state) {
         case START:
             if (continue_on()) {
                 state = PLAYING;
-                grid_init();
+                grid_init(high_score);
                 snake_init(&snake);
                 food = food_init();
+                fps = snake.len;
+                change_fps(fps);
+
             }
             break;
         case PLAYING:
+            if (!first_move) {
+                if (snake_change_dir(&snake)) {
+                    first_move = 1;
+                    break;
+                }
+                continue;
+            }
+
+            if (!start_frame) continue;
+            start_frame = 0;
+
             snake_move(&snake);
             if (snake_check_food(snake, food)) {
                 snake_eat(&snake, &food);
+                fps += snake_get_score(snake) * 1.15;
+                change_fps(fps);
             }
             grid_draw(snake, food);
 
             if (!snake.alive) {
                 state = GAME_OVER;
-                print_game_over();
+                if (snake_get_score(snake) > high_score) high_score = snake_get_score(snake);
+                print_game_over(snake_get_score(snake), high_score);
             }
             break;
         case GAME_OVER:
             if (continue_on()) {
             	state = PLAYING;
-            	grid_init();
+            	grid_init(high_score);
             	snake_init(&snake);
             	food = food_init();
+            	first_move = 0;
+                fps = snake.len;
+                change_fps(fps);
             }
             break;
         }
-
-        HAL_Delay(100);
     }
 
     return 0;
 }
 
-int continue_on() {
-//    if (!uart_check_flag()) return 0;
-//    uart_clear_flag();
 
-//    char c = get_uart_char();
+void TIM2_IRQHandler() {
+    start_frame = 1;
+    TIM2->SR &= ~TIM_SR_UIF;
+
+    return;
+}
+
+
+
+int continue_on() {
     return get_joystick_button();
+}
+
+
+void change_fps(uint32_t fps) {
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+    
+    NVIC_DisableIRQ(TIM2_IRQn);
+    TIM2->CR1 &= ~TIM_CR1_CEN;
+    TIM2->CNT = 0;
+    TIM2->SR &= ~TIM_SR_UIF;  
+    
+    
+    TIM2->ARR = CPU_FREQ / fps;
+    TIM2->PSC = 0;
+    TIM2->DIER |= TIM_DIER_UIE;
+
+//    DBGMCU->APB1FZR1 |= 1;
+
+    NVIC_EnableIRQ(TIM2_IRQn);
+    __enable_irq();
+    TIM2->CR1 |= TIM_CR1_CEN;
+    return;
+
+
 }
 
 /**

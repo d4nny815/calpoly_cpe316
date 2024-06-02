@@ -2,5 +2,5 @@
 ../Core/Src/Joystick.c:26:6:ADC_init	7
 ../Core/Src/Joystick.c:73:6:joystick_init	1
 ../Core/Src/Joystick.c:80:10:get_joystick_x	2
-../Core/Src/Joystick.c:87:10:get_joystick_y	2
-../Core/Src/Joystick.c:94:9:get_joystick_button	1
+../Core/Src/Joystick.c:88:10:get_joystick_y	2
+../Core/Src/Joystick.c:95:9:get_joystick_button	1
