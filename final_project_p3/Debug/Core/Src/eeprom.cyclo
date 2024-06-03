@@ -1,0 +1,4 @@
+../Core/Src/eeprom.c:10:6:i2c_pin_init	1
+../Core/Src/eeprom.c:28:6:eeprom_init	1
+../Core/Src/eeprom.c:53:6:eeprom_store_byte	8
+../Core/Src/eeprom.c:90:9:eeprom_load_byte	6

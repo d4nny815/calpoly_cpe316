@@ -23,6 +23,8 @@
 #include "RNG.h"
 #include "Screen.h"
 #include "Joystick.h"
+#include "HighScore.h"
+#include <stdio.h>
 
 #define START_FPS (10)
 #define SPEED_UP_FACTOR (1.15f)
@@ -30,6 +32,7 @@
 typedef enum {
     START,
     PLAYING,
+    ADD_HIGHSCORE,
     GAME_OVER
 } GameState_t;
 
@@ -49,6 +52,15 @@ int main(void) {
     rng_init();
     uart_init();
     joystick_init();
+    highscore_init();
+
+
+//    HighScore_t tmp;
+    // for (int i = 0; i < HIGH_SCORES_NUM; i++) {
+        // snprintf(tmp.name, MAX_NAME_LEN, "Player %d", i + 1);
+        // tmp.score = (i * 32 + 2) / 3 ;
+        // store_highscore(tmp, i);
+    // }
 
     Snake_t snake;
     Food_t food;
@@ -95,7 +107,7 @@ int main(void) {
             if (!snake.alive) {
                 state = GAME_OVER;
                 if (snake_get_score(snake) > high_score) high_score = snake_get_score(snake);
-                print_game_over(snake_get_score(snake), high_score);
+                print_game_over(snake_get_score(snake));
             }
             break;
         case GAME_OVER:
@@ -122,8 +134,6 @@ void TIM2_IRQHandler() {
 
     return;
 }
-
-
 
 int continue_on() {
     return get_joystick_button();
@@ -152,6 +162,9 @@ void change_fps(uint32_t fps) {
 
 
 }
+
+
+
 
 /**
   * @brief System Clock Configuration

@@ -1,2 +1,3 @@
 ../Core/Src/Screen.c:10:6:print_start_screen	2
 ../Core/Src/Screen.c:20:6:print_game_over	2
+../Core/Src/Screen.c:35:6:print_high_scores	2

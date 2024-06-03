@@ -1,0 +1,5 @@
+../Core/Src/HighScore.c:16:6:highscore_init	24	static
+../Core/Src/HighScore.c:41:6:store_highscore	16	static
+../Core/Src/HighScore.c:62:13:load_highscore	24	static
+../Core/Src/HighScore.c:72:9:is_a_highscore	16	static
+../Core/Src/HighScore.c:83:6:update_highscores	48	static

@@ -25,7 +25,7 @@ Core/Src/Screen.o: ../Core/Src/Screen.c ../Core/Src/Screen.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rng.h \
  ../Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l476xx.h \
- ../Core/Src/uart.h
+ ../Core/Src/uart.h ../Core/Src/HighScore.h ../Core/Src/eeprom.h
 ../Core/Src/Screen.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
@@ -55,3 +55,5 @@ Core/Src/Screen.o: ../Core/Src/Screen.c ../Core/Src/Screen.h \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rng.h:
 ../Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l476xx.h:
 ../Core/Src/uart.h:
+../Core/Src/HighScore.h:
+../Core/Src/eeprom.h:

@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "uart.h"
+#include "HighScore.h"
 
 #define START_SCREEN_LEN (10)
 static const char* START_SCREEN[START_SCREEN_LEN] = {
@@ -42,6 +43,7 @@ static const char* GAME_OVER_SCREEN[GAME_OVER_LEN] = {
 
 
 void print_start_screen();
-void print_game_over(uint8_t score, uint8_t high_score);
+void print_game_over(uint8_t score);
+void print_high_scores();
 
 #endif /* SRC_SCREEN_H_ */

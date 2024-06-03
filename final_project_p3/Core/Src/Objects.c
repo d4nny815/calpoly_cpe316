@@ -19,7 +19,7 @@ uint8_t same_point(Point_t a, Point_t b) {
 */
 void grid_init(uint8_t high_score) {
     uart_clear_screen();
-    uart_send_escape("[0m"); // reset color
+    uart_send_escape("[0m"); // reset colorQ
 
     // print top and bottom border
     sprintf(snake_print_buffer, "[%u;%uH", TOP_BOUND, LEFT_BOUND);
