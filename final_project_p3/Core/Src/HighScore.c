@@ -8,6 +8,7 @@
 #include "HighScore.h"
 
 static uint8_t lowest_score;
+static uint8_t highest_score;
 
 
 /**
@@ -15,6 +16,14 @@ static uint8_t lowest_score;
 */
 void highscore_init() {
     eeprom_init();
+
+    // reset the scores on eeprom
+//    HighScore_t tmp;
+//     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
+//         snprintf(tmp.name, MAX_NAME_LEN, "Player %d :)", i + 1);
+//         tmp.score = 0;
+//         store_highscore(tmp, i);
+//     }
     
     uint16_t addr;
     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
@@ -28,6 +37,7 @@ void highscore_init() {
     }
 
     lowest_score = high_scores[MAX_NAME_LEN - 1].score;
+    highest_score = high_scores[0].score;
 
     return;
 }
@@ -97,10 +107,29 @@ void update_highscores(HighScore_t high_score) {
     high_scores[i] = high_score;
     lowest_score = high_scores[MAX_NAME_LEN - 1].score;
 
-    // rewrite the high scores to eeprom
-    for (i = 0; i < HIGH_SCORES_NUM; i++) {
+    // rewrite the newest high scores to eeprom
+    while (i < HIGH_SCORES_NUM) {
         store_highscore(high_scores[i], i);
+        i++;
     }
 
     return;
+}
+
+
+/**
+ * @brief Get the lowest score
+ * @return the lowest score
+*/
+uint8_t get_lowest_score() {
+    return lowest_score;
+}
+
+
+/**
+ * @brief Get the highest score
+ * @return the highest score
+*/
+uint8_t get_highest_score() {
+    return highest_score;
 }

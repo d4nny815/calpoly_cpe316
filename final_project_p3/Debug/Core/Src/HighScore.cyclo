@@ -1,5 +1,7 @@
-../Core/Src/HighScore.c:16:6:highscore_init	3
-../Core/Src/HighScore.c:41:6:store_highscore	2
-../Core/Src/HighScore.c:62:13:load_highscore	1
-../Core/Src/HighScore.c:72:9:is_a_highscore	1
-../Core/Src/HighScore.c:83:6:update_highscores	5
+../Core/Src/HighScore.c:17:6:highscore_init	3
+../Core/Src/HighScore.c:51:6:store_highscore	2
+../Core/Src/HighScore.c:72:13:load_highscore	1
+../Core/Src/HighScore.c:82:9:is_a_highscore	1
+../Core/Src/HighScore.c:93:6:update_highscores	5
+../Core/Src/HighScore.c:124:9:get_lowest_score	1
+../Core/Src/HighScore.c:133:9:get_highest_score	1

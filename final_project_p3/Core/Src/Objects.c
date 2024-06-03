@@ -351,6 +351,16 @@ uint8_t snake_get_score(Snake_t snake) {
     return snake.score;
 }
 
+
+/**
+ * @brief check if snake is alive
+ * @param snake: snake object
+ * @return 1 if alive, 0 otherwise
+*/
+uint8_t snake_is_alive(Snake_t snake) {
+    return snake.alive;
+}
+
 // * --------------------------------------------------------
 // * FOOD
 // * --------------------------------------------------------

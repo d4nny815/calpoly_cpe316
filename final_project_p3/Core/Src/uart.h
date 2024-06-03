@@ -14,6 +14,8 @@
 #define USART_BAUD (115200)
 #define USART_BRR ((int)(CPU_FREQ / USART_BAUD))
 #define ESC_CHAR ((char)0x1B)
+#define BACKSPACE_CHAR ((char)127)
+#define ENTER_CHAR ('\r')
 
 void uart_pin_init(void);
 void uart_init(void);

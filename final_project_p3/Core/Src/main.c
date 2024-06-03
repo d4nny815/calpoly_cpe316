@@ -39,6 +39,7 @@ typedef enum {
 
 int continue_on();
 int8_t get_player_name(char* name);
+void start_new_game(Snake_t* snake, Food_t* food, uint32_t* fps);
 
 void change_fps(uint32_t fps);
 volatile int start_frame = 0;
@@ -55,13 +56,7 @@ int main(void) {
     highscore_init();
 
 
-    // reset the score
-//    HighScore_t tmp;
-//     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
-//         snprintf(tmp.name, MAX_NAME_LEN, "Player %d :)", i + 1);
-//         tmp.score = 0;
-//         store_highscore(tmp, i);
-//     }
+    
 
     Snake_t snake;
     Food_t food;
@@ -76,12 +71,13 @@ int main(void) {
         case START:
             if (continue_on()) {
                 state = PLAYING;
-                grid_init(load_highscore(0).score);
-                snake_init(&snake);
-                food = food_init();
-                fps = START_FPS;
-                change_fps(fps);
-
+                first_move = 0;
+                // grid_init(load_highscore(0).score);
+                // snake_init(&snake);
+                // food = food_init();
+                // fps = START_FPS;
+                // change_fps(fps);
+                start_new_game(&snake, &food, &fps);
             }
             break;
         case PLAYING:
@@ -104,7 +100,7 @@ int main(void) {
             }
             grid_draw(snake, food);
 
-            if (!snake.alive) {
+            if (!snake_is_alive(snake)) {
                 if (is_a_highscore(snake_get_score(snake))) {
                     if (get_player_name(highscore.name)) {
                         highscore.score = snake_get_score(snake);
@@ -132,6 +128,18 @@ int main(void) {
     return 0;
 }
 
+
+void start_new_game(Snake_t* snake, Food_t* food, uint32_t* fps) {
+    grid_init(get_highest_score());
+    snake_init(snake);
+    *food = food_init();
+    *fps = START_FPS;
+    change_fps(*fps);
+
+    return;
+}
+
+
 int8_t get_player_name(char* name) {
     char c;
     int i = 0;
@@ -147,13 +155,13 @@ int8_t get_player_name(char* name) {
             if (i == 0 && c == '\r') {
                 return 0;
             }
-            else if (c == '\r' || i == MAX_NAME_LEN - 1) {
+            else if (c == ENTER_CHAR) {
                 uart_println(" ");
-                uart_println("Give it a sec, memory being is  VERY slow");
+                uart_println("Give it a sec, memory is being VERY slow");
                 name[i] = '\0';
                 return 1;
             }
-            else if (c == 127) {
+            else if (c == BACKSPACE_CHAR) {
                 if (i > 0) {
                     i--;
                     uart_send_escape("[1D");
@@ -164,6 +172,13 @@ int8_t get_player_name(char* name) {
                 name[i] = c;
                 uart_send_char(c);
                 i++;
+            }
+
+            if (i == MAX_NAME_LEN - 1) {
+                uart_println(" ");
+                uart_println("Give it a sec, memory is being VERY slow");
+                name[i] = '\0';
+                return 1;
             }
         }
     }
@@ -176,6 +191,7 @@ void TIM2_IRQHandler() {
 
     return;
 }
+
 
 int continue_on() {
     return get_joystick_button();
@@ -195,7 +211,7 @@ void change_fps(uint32_t fps) {
     TIM2->PSC = 0;
     TIM2->DIER |= TIM_DIER_UIE;
 
-//    DBGMCU->APB1FZR1 |= 1;
+    DBGMCU->APB1FZR1 |= 1;
 
     NVIC_EnableIRQ(TIM2_IRQn);
     __enable_irq();

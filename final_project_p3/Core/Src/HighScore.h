@@ -28,5 +28,8 @@ void update_highscores(HighScore_t high_score);
 void store_highscore(HighScore_t highscore, uint8_t index);
 HighScore_t load_highscore(uint8_t index);
 
+uint8_t get_lowest_score();
+uint8_t get_highest_score();
+
 
 #endif /* SRC_HIGHSCORE_H_ */
