@@ -81,7 +81,7 @@ void eeprom_store_byte(uint8_t data, uint16_t addr) {
     while (I2C1->ISR & I2C_ISR_STOPF);
     I2C1->ICR |= I2C_ICR_STOPCF;
 
-    for (uint32_t i=0; i<(uint32_t)250e3; i++); // 5ms delay for write to process
+    for (uint32_t i=0; i<CPU_FREQ / 1000 * 5; i++); // 5ms delay for write to process
 
 
     return;

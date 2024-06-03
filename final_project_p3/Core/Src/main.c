@@ -32,13 +32,13 @@
 typedef enum {
     START,
     PLAYING,
-    ADD_HIGHSCORE,
     GAME_OVER
 } GameState_t;
 
 
 
 int continue_on();
+int8_t get_player_name(char* name);
 
 void change_fps(uint32_t fps);
 volatile int start_frame = 0;
@@ -55,20 +55,20 @@ int main(void) {
     highscore_init();
 
 
+    // reset the score
 //    HighScore_t tmp;
-    // for (int i = 0; i < HIGH_SCORES_NUM; i++) {
-        // snprintf(tmp.name, MAX_NAME_LEN, "Player %d", i + 1);
-        // tmp.score = (i * 32 + 2) / 3 ;
-        // store_highscore(tmp, i);
-    // }
+//     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
+//         snprintf(tmp.name, MAX_NAME_LEN, "Player %d :)", i + 1);
+//         tmp.score = 0;
+//         store_highscore(tmp, i);
+//     }
 
     Snake_t snake;
     Food_t food;
     GameState_t state = START;
     print_start_screen();
     uint32_t fps;
-    uint8_t high_score = 0;
-    
+    HighScore_t highscore;
 
     int first_move = 0;
     while (1) {
@@ -76,7 +76,7 @@ int main(void) {
         case START:
             if (continue_on()) {
                 state = PLAYING;
-                grid_init(high_score);
+                grid_init(load_highscore(0).score);
                 snake_init(&snake);
                 food = food_init();
                 fps = START_FPS;
@@ -105,15 +105,20 @@ int main(void) {
             grid_draw(snake, food);
 
             if (!snake.alive) {
+                if (is_a_highscore(snake_get_score(snake))) {
+                    if (get_player_name(highscore.name)) {
+                        highscore.score = snake_get_score(snake);
+                        update_highscores(highscore);
+                    }
+                }
                 state = GAME_OVER;
-                if (snake_get_score(snake) > high_score) high_score = snake_get_score(snake);
                 print_game_over(snake_get_score(snake));
             }
             break;
         case GAME_OVER:
             if (continue_on()) {
             	state = PLAYING;
-            	grid_init(high_score);
+            	grid_init(load_highscore(0).score);
             	snake_init(&snake);
             	food = food_init();
             	first_move = 0;
@@ -125,6 +130,43 @@ int main(void) {
     }
 
     return 0;
+}
+
+int8_t get_player_name(char* name) {
+    char c;
+    int i = 0;
+    uart_clear_screen();
+    uart_println("Enter your name: ");
+
+
+    while (1) {
+        if (uart_check_flag()) {
+            uart_clear_flag();
+            c = get_uart_char();
+
+            if (i == 0 && c == '\r') {
+                return 0;
+            }
+            else if (c == '\r' || i == MAX_NAME_LEN - 1) {
+                uart_println(" ");
+                uart_println("Give it a sec, memory being is  VERY slow");
+                name[i] = '\0';
+                return 1;
+            }
+            else if (c == 127) {
+                if (i > 0) {
+                    i--;
+                    uart_send_escape("[1D");
+                    uart_send_escape("[K");
+                }
+            }
+            else {
+                name[i] = c;
+                uart_send_char(c);
+                i++;
+            }
+        }
+    }
 }
 
 
