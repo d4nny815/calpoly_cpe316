@@ -76,13 +76,13 @@ void print_high_scores() {
     char uart_buf[100];
 
     uart_println(" ====================================");
-    uart_println("| Name          | Score              |");
+    uart_println("| Name                 | Score       |");
     uart_println(" ====================================");
 
     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
         // tmp = load_highscore(i);
         tmp = high_scores[i];
-        sprintf(uart_buf, "| %-13s | %-18u |", tmp.name, tmp.score);
+        sprintf(uart_buf, "| %-20s | %-11u |", tmp.name, tmp.score);
         uart_println(uart_buf);
         uart_println(" ====================================");
     }

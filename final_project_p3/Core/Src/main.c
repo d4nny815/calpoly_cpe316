@@ -134,8 +134,11 @@ int8_t get_player_name(char* name) {
     uart_clear_screen();
     uart_println("CONGRATS");
     uart_println("You set a new record");
-    uart_println("Enter your name for the highscore:");
+    uart_println("Enter your name for the highscore: (MAX 20 characters)");
 
+    uart_send_escape("[3E");
+    uart_println("You can also press enter to skip :(");
+    uart_send_escape("[3F");
 
     while (1) {
         if (uart_check_flag()) {

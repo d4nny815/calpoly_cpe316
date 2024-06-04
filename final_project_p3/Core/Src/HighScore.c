@@ -18,14 +18,14 @@ HighScore_t high_scores[HIGH_SCORES_NUM]; // Define the high_scores array
 void highscore_init() {
     eeprom_init();
 
-    // reset the scores on eeprom
+     //reset the scores on eeprom
 //    HighScore_t tmp;
 //     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
 //         snprintf(tmp.name, MAX_NAME_LEN, "Player %d :)", i + 1);
 //         tmp.score = 0;
 //         store_highscore(tmp, i);
 //     }
-    
+//
     uint16_t addr;
     for (int i = 0; i < HIGH_SCORES_NUM; i++) {
         for (int j = 0; j < MAX_NAME_LEN; j++) {
