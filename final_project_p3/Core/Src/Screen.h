@@ -11,34 +11,13 @@
 #include "main.h"
 #include "uart.h"
 #include "HighScore.h"
+#include <stdio.h>
 
 #define START_SCREEN_LEN (10)
-static const char* START_SCREEN[START_SCREEN_LEN] = {
-		" ____ _____  _    ____ _____ ",
-		"/ ___|_   _|/ \\  |  _ \\_   _|",
-		"\\___ \\ | | / _ \\ | |_) || |  ",
-		" ___) || |/ ___ \\|  _ < | |  ",
-		"|____/ |_/_/   \\_\\_| \\_\\|_|  "
-		" ",
-		" ",
-		" ",
-		" ",
-		"Press joystick to start the game",
-	};
+extern const char* START_SCREEN[START_SCREEN_LEN];
 
 #define GAME_OVER_LEN (10)
-static const char* GAME_OVER_SCREEN[GAME_OVER_LEN] = {
-	"  ____    _    __  __ _____    _____     _______ ____  ",
-	" / ___|  / \\  |  \\/  | ____|  / _ \\ \\   / / ____|  _ \\ ",
-	"| |  _  / _ \\ | |\\/| |  _|   | | | \\ \\ / /|  _| | |_) |",
-	"| |_| |/ ___ \\| |  | | |___  | |_| |\\ V / | |___|  _ < ",
-	" \\____/_/   \\_\\_|  |_|_____|  \\___/  \\_/  |_____|_| \\_\\",
-	" ",
-	" ",
-	" ",
-	" ",
-	"Press joystick to restart the game",
-};
+extern const char* GAME_OVER_SCREEN[GAME_OVER_LEN];
 		
 
 

@@ -9,6 +9,7 @@
 
 static uint8_t lowest_score;
 static uint8_t highest_score;
+HighScore_t high_scores[HIGH_SCORES_NUM]; // Define the high_scores array
 
 
 /**

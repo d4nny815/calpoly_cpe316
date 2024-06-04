@@ -55,9 +55,6 @@ int main(void) {
     joystick_init();
     highscore_init();
 
-
-    
-
     Snake_t snake;
     Food_t food;
     GameState_t state = START;
@@ -72,11 +69,6 @@ int main(void) {
             if (continue_on()) {
                 state = PLAYING;
                 first_move = 0;
-                // grid_init(load_highscore(0).score);
-                // snake_init(&snake);
-                // food = food_init();
-                // fps = START_FPS;
-                // change_fps(fps);
                 start_new_game(&snake, &food, &fps);
             }
             break;
@@ -98,7 +90,7 @@ int main(void) {
                 fps *= SPEED_UP_FACTOR;
                 change_fps(fps);
             }
-            grid_draw(snake, food);
+            grid_draw(snake);
 
             if (!snake_is_alive(snake)) {
                 if (is_a_highscore(snake_get_score(snake))) {
@@ -114,12 +106,8 @@ int main(void) {
         case GAME_OVER:
             if (continue_on()) {
             	state = PLAYING;
-            	grid_init(load_highscore(0).score);
-            	snake_init(&snake);
-            	food = food_init();
             	first_move = 0;
-                fps = START_FPS;
-                change_fps(fps);
+            	start_new_game(&snake, &food, &fps);
             }
             break;
         }
@@ -144,7 +132,9 @@ int8_t get_player_name(char* name) {
     char c;
     int i = 0;
     uart_clear_screen();
-    uart_println("Enter your name: ");
+    uart_println("CONGRATS");
+    uart_println("You set a new record");
+    uart_println("Enter your name for the highscore:");
 
 
     while (1) {
@@ -216,9 +206,8 @@ void change_fps(uint32_t fps) {
     NVIC_EnableIRQ(TIM2_IRQn);
     __enable_irq();
     TIM2->CR1 |= TIM_CR1_CEN;
+
     return;
-
-
 }
 
 

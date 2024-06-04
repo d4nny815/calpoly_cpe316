@@ -28,11 +28,16 @@ void rng_init() {
     return;
 }
 
+/**
+ * @brief Get a random number between lower and upper
+ * @param lower: the lower bound, inclusive
+ * @param upper: the upper bound, inclusive
+ * @return the random number
+ */
 uint32_t get_random(uint32_t lower, uint32_t upper) {
     RNG->CR |= RNG_CR_RNGEN;
 
     while (!(RNG->SR & RNG_SR_DRDY));
-
     value = RNG->DR;
 
     return (value % (upper - lower + 1) + lower);

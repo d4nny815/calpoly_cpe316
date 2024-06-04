@@ -13,14 +13,14 @@
 
 #define HIGH_SCORES_START_ADDR (0x69)
 #define HIGH_SCORES_NUM (10)
-#define MAX_NAME_LEN (20)
+#define MAX_NAME_LEN (20 + 1) // 20 for name, 1 for null terminator
 
 typedef struct {
     char name[MAX_NAME_LEN];
     uint8_t score;
 } HighScore_t;
 
-static HighScore_t high_scores[HIGH_SCORES_NUM];
+extern HighScore_t high_scores[HIGH_SCORES_NUM];
 
 void highscore_init();
 uint8_t is_a_highscore(uint8_t score);

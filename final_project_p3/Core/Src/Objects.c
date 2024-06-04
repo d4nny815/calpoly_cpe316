@@ -8,14 +8,24 @@
 #include "Objects.h"
 
 static BodyPart_t old_tail;
+char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};
 
+// * --------------------------------------------------------
+
+
+/**
+ * @brief check if two points are the same
+ * @param a: point a
+ * @param b: point b
+ * @return 1 if same, 0 otherwise
+*/
 uint8_t same_point(Point_t a, Point_t b) {
     return (a.x == b.x && a.y == b.y);
 }
 
 
 /**
- * @brief Initialize the grid with black color
+ * @brief initialize the border of the grid
 */
 void grid_init(uint8_t high_score) {
     uart_clear_screen();
@@ -54,36 +64,14 @@ void grid_init(uint8_t high_score) {
     uart_send_escape(snake_print_buffer);
     uart_send_string("Score: ");
 
-
-
-
     return;
 }
 
-
 /**
- * @brief Clear the grid with black color
-*/
-void grid_clear() {
-    // TODO: SPI display
-    // for (int i = 0; i < VGA_WIDTH; i++) {
-    //     for (int j = 0; j < VGA_HEIGHT; j++) {
-    //         frame_buffer[i + j * VGA_WIDTH].color = 0x000; // black
-    //     }
-    // }
-
-    return;
-}
-
-
-// TODO: change to SPI display
-/**
- * @brief Draw the snake and food on the grid
+ * @brief draw the snake
  * @param snake: the snake object
- * @param food: the food object
 */
-void grid_draw(Snake_t snake, Food_t food) {
-    // uart_clear_screen();
+void grid_draw(Snake_t snake) {
     snake_draw(snake);
 
     return;
@@ -91,12 +79,12 @@ void grid_draw(Snake_t snake, Food_t food) {
 
 
 /**
- * @brief Draw the snake object
+ * @brief draw the snake object
  * @param snake: the snake object
+ * @note this function is optimized for drawing the snake, since most of the snake is not moving. hehe so no dma
 */
 void snake_draw(Snake_t snake) {
     // erase tail
-    // sprintf(snake_print_buffer, "[%u;%uH", snake.tail->pos.y, snake.tail->pos.x);
     sprintf(snake_print_buffer, "[%u;%uH", old_tail.pos.y, old_tail.pos.x);
     uart_send_escape(snake_print_buffer);
     uart_send_char(' ');
@@ -110,7 +98,7 @@ void snake_draw(Snake_t snake) {
     // print current score
     sprintf(snake_print_buffer, "[%u;%uH", SCORE_CURSOR_Y, SCORE_CURSOR_X);
     uart_send_escape(snake_print_buffer);
-    sprintf(snake_print_buffer, "%u", snake.score);
+    sprintf(snake_print_buffer, "%u", snake_get_score(snake));
     uart_send_string(snake_print_buffer);
     
     return;
@@ -118,8 +106,8 @@ void snake_draw(Snake_t snake) {
 
 
 /**
- * @brief Initialize the snake object
- * @return the snake object
+ * @brief init the snake object
+ * @param snake: the snake object
 */
 void snake_init(Snake_t* snake) {
     snake->len = START_LEN;
@@ -127,9 +115,11 @@ void snake_init(Snake_t* snake) {
     snake->alive = 1;
     snake->score = 0;
     
+    // so snake body doesn't go over the boundary
     uint8_t x = get_random(LEFT_BOUND + START_BOUNDARY_OFFSET, RIGHT_BOUND - START_BOUNDARY_OFFSET);
     uint8_t y = get_random(TOP_BOUND + START_BOUNDARY_OFFSET, BOTTOM_BOUND - START_BOUNDARY_OFFSET - snake->len - 1);
 
+    // snake will draw vertically
     for (int i = 0; i < snake->len; i++) {
         snake->body[i].valid = 1;
         snake->body[i].pos.x = x;
@@ -139,6 +129,7 @@ void snake_init(Snake_t* snake) {
     snake->tail = &(snake->body[snake->len - 1]);
     old_tail = *(snake->tail);
 
+    // invalidate the rest of the body
     for (int i = snake->len; i < MAX_SNAKE_LEN; i++) {
         snake->body[i].valid = 0;
     }
@@ -158,24 +149,22 @@ void snake_init(Snake_t* snake) {
 
 
 /**
- * @brief Move the snake object
- * @return  -1 if snake ded
- *           0 if snake is alive
+ * @brief move the snake object
+ * @return  -1 if snake ded, 0 if snake is alive
 */
 int8_t snake_move(Snake_t* snake) {
-    if (!snake->alive) {
+    if (!snake_is_alive(*snake)) {
         return -1;
     }
 
     snake_change_dir(snake);
 
     // check if snake collides with boundary
-    if (!WITHIN_BOUND(snake->body[0].pos.x, snake->body[0].pos.y)) {
+    BodyPart_t* p_head = &snake->body[0];
+    if (!WITHIN_BOUND(p_head->pos.x, p_head->pos.y)) {
         snake_die(snake);
         return -1;
     }
-
-    BodyPart_t* p_head = &snake->body[0];
 
     old_tail = *(snake->tail);
 
@@ -214,9 +203,8 @@ int8_t snake_move(Snake_t* snake) {
 
 
 /**
- * @brief Check if snake collides with itself
- * @return  0 if snake is alive,
- *          non-zero if snake is ded  
+ * @brief check if snake collides with itself
+ * @return  0 if snake is alive, non-zero if snake is ded
 */
 int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts) {
     for (int i = 1; i < MAX_SNAKE_LEN; i++) {
@@ -240,27 +228,29 @@ int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts) {
 */
 void snake_die(Snake_t* snake) {
     snake->alive = 0;
-    uart_println("Snake ded");
+    // uart_println("Snake ded");
  
     return;
 }
 
 
 /**
- * @brief Read the UART input and change the snake direction
+ * @brief read the joystick and change the snake direction
  * @param snake: the snake object
- * @return 0 if no change
- *          non zero if change
+ * @return 0 if no change, non zero if change
 */
 uint8_t snake_change_dir(Snake_t* snake) {
+    // TODO: run the adcs in parallel
     uint16_t joy_x = get_joystick_x();
     uint16_t joy_y = get_joystick_y();
 
     Direction_t new_dir;
     uint8_t x_axis;
 
-    x_axis = abs(joy_x - 2048) > abs(joy_y - 2048); 
+    // get larger magnitude
+    x_axis = abs(joy_x - MID_POINT) > abs(joy_y - MID_POINT); 
 
+    // only read if direction is pronounced
     if (x_axis) {
         if (joy_x > RIGHT_QUARTER) {
             new_dir = EAST;
@@ -283,7 +273,7 @@ uint8_t snake_change_dir(Snake_t* snake) {
         }
     }
 
-    // change dir as long as not 180, if same dir then nothing happens
+    // change dir as long as not 180, if same dir then nothing bad happens
     switch (snake->dir) {
     case NORTH:
         if (new_dir != SOUTH) snake->dir = new_dir;
@@ -305,8 +295,7 @@ uint8_t snake_change_dir(Snake_t* snake) {
 
 /**
  * @brief check snake head collides with food
- * @return  0 if no
- *          non-zero if yes
+ * @return  0 if no, non-zero if yes
 */
 uint8_t snake_check_food(Snake_t snake, Food_t food) {
     return same_point((snake.body[0]).pos, food);
@@ -314,7 +303,7 @@ uint8_t snake_check_food(Snake_t snake, Food_t food) {
 
 
 /**
- * @brief Grow the snake
+ * @brief grow the snake
  * @param snake: the snake object
 */
 void snake_grow(Snake_t* snake) {
@@ -330,7 +319,7 @@ void snake_grow(Snake_t* snake) {
 
 
 /**
- * @brief Eat the food
+ * @brief eat the food
  * @param snake: the snake object
  * @param food: the food object
 */
@@ -366,7 +355,7 @@ uint8_t snake_is_alive(Snake_t snake) {
 // * --------------------------------------------------------
 
 /**
- * @brief Initialize the food object
+ * @brief init the food object
  * @return the food object
 */
 Food_t food_init() {
@@ -378,10 +367,11 @@ Food_t food_init() {
 
 
 /**
- * @brief Respawn the food object
+ * @brief respawn the food object
  * @param food: the food object
 */
 void food_respawn(Food_t* food) {
+    // dont spawn on the border
     food->x = get_random(LEFT_BOUND + 1, RIGHT_BOUND - 1);
     food->y = get_random(TOP_BOUND + 1, BOTTOM_BOUND - 1);
 
@@ -391,7 +381,7 @@ void food_respawn(Food_t* food) {
 
 
 /**
- * @brief Draw the food object
+ * @brief draw the food object
 */
 void food_draw(Food_t food) {
     sprintf(snake_print_buffer, "[%u;%uH", food.y, food.x);

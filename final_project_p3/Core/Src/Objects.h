@@ -9,19 +9,18 @@
 #define SRC_OBJECTS_H_
 
 #include "main.h"
-#include "VGA.h"
 #include "uart.h"
 #include "stdio.h"
 #include "RNG.h"
 #include "Joystick.h"
-#include "math.h"
+#include "stdlib.h"
 
 #define SNAKE_PRINT_LEN (100)
-static char snake_print_buffer[SNAKE_PRINT_LEN] = {'\0'};
+extern char snake_print_buffer[SNAKE_PRINT_LEN];
 
 #define START_BOUNDARY_OFFSET (10)
 #define START_LEN (5)
-#define MAX_SNAKE_LEN (50)
+#define MAX_SNAKE_LEN (255) // HOPEFULLY NO ONE CAN GET THIS LONG
 
 
 #define LEFT_BOUND (8)
@@ -58,7 +57,7 @@ typedef enum {
 typedef struct {
     uint8_t len;
     BodyPart_t body[MAX_SNAKE_LEN];
-    BodyPart_t* tail;
+    BodyPart_t* tail; // prob don't need this
     Direction_t dir;
     uint8_t alive;
     uint8_t score;
@@ -69,26 +68,25 @@ typedef Point_t Food_t;
 uint8_t same_point(Point_t a, Point_t b);
 
 void grid_init(uint8_t high_score);
-void grid_draw(Snake_t snake, Food_t food); // ? leave this to dma ?
-void grid_clear();
+void grid_draw(Snake_t snake);
 
 
-void snake_init(Snake_t* snake); // done
+void snake_init(Snake_t* snake);
 int8_t snake_move(Snake_t* snake); 
-uint8_t snake_change_dir(Snake_t* snake); // done
-void snake_eat(Snake_t* snake, Food_t* food); // done
-void snake_grow(Snake_t* snake); // done
-void snake_die(Snake_t* snake); // done
-void snake_draw(Snake_t snake); // done
-uint8_t snake_check_food(Snake_t snake, Food_t food); // done
-int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts); // done
+uint8_t snake_change_dir(Snake_t* snake);
+void snake_eat(Snake_t* snake, Food_t* food);
+void snake_grow(Snake_t* snake);
+void snake_die(Snake_t* snake);
+void snake_draw(Snake_t snake);
+uint8_t snake_check_food(Snake_t snake, Food_t food);
+int8_t snake_hit_itself(Point_t snake_head, BodyPart_t* body_parts);
 
 uint8_t snake_get_score(Snake_t snake);
 uint8_t snake_is_alive(Snake_t snake);
 
 
-Food_t food_init(); // done
-void food_respawn(Food_t* food); // done
-void food_draw(Food_t food); // done
+Food_t food_init();
+void food_respawn(Food_t* food);
+void food_draw(Food_t food);
 
 #endif /* SRC_OBJECTS_H_ */
